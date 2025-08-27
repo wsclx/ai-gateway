@@ -1,0 +1,32 @@
+[
+  {
+    "name": "DUH General Assistant",
+    "openai_id": "asst_JKRuB1Tmtiqw4YvSfbxgEsf9",
+    "model": "gpt-4o-mini"
+  },
+  {
+    "name": "DUH HR Assistant",
+    "openai_id": "asst_lAVWsxCHVuSwyUSdhAJwGonJ",
+    "model": "gpt-4o-mini"
+  },
+  {
+    "name": "DUH IT Support",
+    "openai_id": "asst_YqPVgjRlCQOWrlo43gV7pKWw",
+    "model": "gpt-4o-mini"
+  },
+  {
+    "name": "DUH Marketing Assistant",
+    "openai_id": "asst_DzQFDp7Dgwf4LuQHuLknbYFi",
+    "model": "gpt-4o-mini"
+  },
+  {
+    "name": "DUH Sales Assistant",
+    "openai_id": "asst_iMu38XQhC6fWFl8ML1HCsJEO",
+    "model": "gpt-4o-mini"
+  },
+  {
+    "name": "DUH Finance Assistant",
+    "openai_id": "asst_J57NkamhysX23d7AIPTqZHeh",
+    "model": "gpt-4o-mini"
+  }
+]
