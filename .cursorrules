@@ -1,0 +1,59 @@
+# Cursor Rules für AI Gateway Design-System
+
+## Design-System Integration
+Always read and follow: /design/tokens.json, /design/components.md, /design/layout.md
+Enforce: No hardcoded hex colors; use design tokens from /design/tokens.json
+Accessibility: Follow /design/a11y.md; include keyboard focus and ARIA attributes
+Performance: Respect /design/perf.md budgets and guidelines
+
+## Code Style & Architecture
+Use existing Tailwind config with design token integration
+Prefer shadcn/ui primitives over custom components
+Follow TypeScript best practices with strict typing
+Use absolute imports with @/ prefix
+
+## UI/UX Guidelines
+- Mobile-first responsive design
+- Consistent spacing using design token values
+- Professional, clean appearance without garish colors
+- Intuitive workflow-logical UI with good supporting features
+- Accessibility-first approach with proper ARIA labels
+
+## Component Standards
+- Use Radix UI primitives through shadcn/ui
+- Include proper loading, empty, and error states
+- Implement proper form validation with inline errors
+- Use consistent motion durations (150ms, 250ms, 350ms)
+- Respect prefers-reduced-motion user preference
+
+## White-Labeling Support
+- Use branding configuration from /lib/branding.ts
+- Implement CSS variables for easy customization
+- Support both light and dark themes
+- Make all text content configurable
+- Use placeholder text format: ***[Platzhalter: Beschreibung]***
+
+## Testing Requirements
+- Include Playwright E2E tests for complex interactions
+- Test accessibility with keyboard navigation
+- Verify responsive behavior across breakpoints
+- Test with reduced motion preferences
+
+## File Organization
+- Place components in appropriate feature directories
+- Use consistent naming: kebab-case for files, PascalCase for components
+- Group related functionality together
+- Maintain clear separation of concerns
+
+## Performance Standards
+- LCP < 2.5s, FID < 100ms, CLS < 0.1
+- Bundle size < 150KB initial, < 50KB per route
+- Implement proper code splitting and lazy loading
+- Optimize images and use Next.js Image component
+
+## Accessibility Requirements
+- WCAG 2.1 AA compliance
+- Proper contrast ratios (4.5:1 for normal text)
+- Keyboard navigation support
+- Screen reader compatibility
+- Focus management and visible focus indicators
