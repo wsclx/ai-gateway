@@ -46,7 +46,7 @@ async def get_current_user(
     if token.startswith("simple_token_"):
         # Simple token format: simple_token_email@domain.com
         username = token.replace("simple_token_", "")
-        print(f"Simple token parsed: {username}")  # Debug output
+        # Debug output removed
     elif token.startswith("eyJ"):
         # JWT token format
         try:
@@ -67,12 +67,12 @@ async def get_current_user(
             username: str = payload.get("sub")
             if username is None:
                 raise credentials_exception
-            print(f"JWT token parsed: {username}")  # Debug output
+            # Debug output removed
         except Exception as e:
-            print(f"Token parsing error: {e}")  # Debug output
+            # Debug output removed
             raise credentials_exception
     else:
-        print(f"Invalid token format: {token[:20]}...")  # Debug output
+        # Debug output removed
         raise credentials_exception
     
     # Get user from database
@@ -84,12 +84,12 @@ async def get_current_user(
         user = result.scalar_one_or_none()
         
         if user is None:
-            print(f"User not found: {username}")  # Debug output
+            # Debug output removed
             raise credentials_exception
-        print(f"User found: {user.ext_subject}")  # Debug output
+        # Debug output removed
         return user
     except Exception as e:
-        print(f"Database error: {e}")  # Debug output
+        # Debug output removed
         raise credentials_exception
 
 
@@ -183,7 +183,7 @@ async def read_users_me_fixed(token: str = Depends(oauth2_scheme)):
                 )
             }
     except Exception as e:
-        print(f"Error in /me-fixed endpoint: {e}")  # Debug output
+        # Debug output removed
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"
@@ -212,7 +212,7 @@ async def read_users_me_simple(token: str = Depends(oauth2_scheme)):
             "department": "IT"
         }
     except Exception as e:
-        print(f"Error in /me-simple endpoint: {e}")  # Debug output
+        # Debug output removed
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"

@@ -1,6 +1,6 @@
 # AI Gateway
 
-[![Version](https://img.shields.io/badge/version-0.2.11-blue.svg)](VERSION)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](VERSION)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
 [![Node.js](https://img.shields.io/badge/node.js-18+-green.svg)](https://nodejs.org)
@@ -12,21 +12,23 @@ A professional, enterprise-grade AI Gateway platform that provides secure, scala
 
 - **Multi-Provider AI Integration**: Support for OpenAI, Anthropic, and custom models
 - **Enterprise Security**: Microsoft Active Directory integration, role-based access control
-- **White-Labeling**: Fully customizable branding, colors, and company identity
+- **White-Labeling**: Fully customizable branding, colors, and company identity with persistent storage
 - **Fine-tuning & Training**: Built-in tools for training and customizing AI models
 - **Analytics & Monitoring**: Comprehensive usage analytics and performance metrics
 - **Responsive Design**: Modern, mobile-first UI built with Next.js and Tailwind CSS
 - **API Gateway**: RESTful API with comprehensive documentation
 - **Docker Support**: Containerized deployment for easy scaling
+- **E2E Testing**: Full Playwright test coverage for all UI components
 
 ## 🏗️ Architecture
 
-- **Backend**: FastAPI (Python) with SQLAlchemy ORM
+- **Backend**: FastAPI (Python) with SQLAlchemy ORM and async support
 - **Frontend**: Next.js 14 with React 18 and TypeScript
 - **Database**: PostgreSQL with async support
 - **Authentication**: Microsoft OIDC integration
 - **Styling**: Tailwind CSS with shadcn/ui components
 - **Design System**: Comprehensive design tokens and component library
+- **Testing**: Playwright E2E tests with comprehensive coverage
 
 ## 📋 Prerequisites
 
@@ -60,15 +62,18 @@ cp frontend/.env.example frontend/.env
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
 # Set up database
 alembic upgrade head
 
+# Create demo data (optional)
+python create_demo_data.py
+
 # Start backend
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### 4. Frontend Setup
@@ -76,14 +81,32 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```bash
 cd frontend
 npm install
+
+# Development mode
 npm run dev
+
+# Production build
+npm run build
+npm start
 ```
 
 ### 5. Access the Application
 
-- Frontend: http://localhost:3000
+- Frontend: http://localhost:3000 (dev) or http://localhost:3001 (prod)
 - Backend API: http://localhost:8000
 - API Documentation: http://localhost:8000/docs
+
+### 6. Run Tests
+
+```bash
+# Frontend E2E tests
+cd frontend
+npx playwright test
+
+# Backend tests
+cd backend
+pytest
+```
 
 ## 🐳 Docker Deployment
 
@@ -244,7 +267,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔄 Version History
 
-- **0.2.11** - Initial public release with white-labeling and design system
+- **0.3.0** - Code cleanup, security fixes, and optimization
 - **0.2.0** - Core AI Gateway functionality
 - **0.1.0** - Basic chat and assistant management
 

@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     MINIO_BUCKET_NAME: str = "audiencly"
     
     # AI Providers
-    OPENAI_API_KEY: str = "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"
+    OPENAI_API_KEY: str = ""
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
     ANTHROPIC_API_KEY: str = ""
     

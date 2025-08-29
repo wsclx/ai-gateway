@@ -14,17 +14,17 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState("chat")
 
   const handleTabChange = useCallback((tab: string) => {
-    console.log('Tab changed to:', tab)
+    // Tab changed
     setActiveTab(tab)
   }, [])
 
   const handleAssistantSelect = useCallback((assistantId: string) => {
-    console.log('Assistant selected:', assistantId)
+    // Assistant selected
     setSelectedAssistant(assistantId)
   }, [])
 
   const handleButtonClick = useCallback((action: string) => {
-    console.log('Button clicked:', action)
+    // Button clicked
     switch (action) {
       case 'chat':
         setActiveTab('chat')
@@ -43,7 +43,7 @@ export default function HomePage() {
         window.location.href = '/branding'
         break
       default:
-        console.log('Unknown action:', action)
+        // Unknown action
     }
   }, [])
 

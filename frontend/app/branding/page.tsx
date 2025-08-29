@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,28 +8,82 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/ui/use-toast';
 import { 
   Palette, 
   Building2, 
   Globe, 
-  Image, 
+  Image as ImageIcon, 
   Save, 
   Upload, 
   Eye,
   EyeOff,
   Download,
-  RefreshCw
+  RefreshCw,
+  X,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import { BrandingConfig, defaultBranding } from '@/lib/branding';
+import Image from 'next/image';
 
 export default function BrandingPage() {
   const [config, setConfig] = useState<BrandingConfig>(defaultBranding);
   const [activeTab, setActiveTab] = useState('company');
   const [isEditing, setIsEditing] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const { toast } = useToast();
+  
+  // File input refs
+  const lightLogoRef = useRef<HTMLInputElement>(null);
+  const darkLogoRef = useRef<HTMLInputElement>(null);
+  const faviconRef = useRef<HTMLInputElement>(null);
+
+  // Load configuration from localStorage on component mount
+  useEffect(() => {
+    const loadSavedConfig = () => {
+      try {
+        const saved = localStorage.getItem('duh-ai-gateway-branding');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setConfig(parsed);
+          toast({
+            title: "Konfiguration geladen",
+            description: "Branding-Einstellungen wurden aus dem lokalen Speicher geladen",
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load branding config:', error);
+        toast({
+          title: "Fehler beim Laden",
+          description: "Konfiguration konnte nicht geladen werden, verwende Standard-Einstellungen",
+          variant: "destructive"
+        });
+      }
+    };
+
+    loadSavedConfig();
+  }, [toast]);
+
+  // Save configuration to localStorage whenever it changes
+  useEffect(() => {
+    const saveConfig = () => {
+      try {
+        localStorage.setItem('duh-ai-gateway-branding', JSON.stringify(config));
+      } catch (error) {
+        console.error('Failed to save branding config:', error);
+      }
+    };
+
+    // Debounce save to avoid excessive localStorage writes
+    const timeoutId = setTimeout(saveConfig, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [config]);
 
   // Handler für Konfigurationsänderungen
-  const handleConfigChange = (path: string, value: any) => {
+  const handleConfigChange = useCallback((path: string, value: any) => {
     setConfig(prev => {
       const newConfig = { ...prev };
       const keys = path.split('.');
@@ -42,40 +96,255 @@ export default function BrandingPage() {
       current[keys[keys.length - 1]] = value;
       return newConfig;
     });
-  };
+  }, []);
+
+  // Datei-Upload verarbeiten
+  const handleFileUpload = useCallback(async (type: 'light' | 'dark' | 'favicon', file: File) => {
+    if (!file) return;
+
+    // Validierung
+    const validTypes = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Ungültiger Dateityp",
+        description: "Bitte wählen Sie eine Bilddatei (JPEG, PNG, SVG oder WebP)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Größenvalidierung
+    const maxSize = type === 'favicon' ? 1024 * 1024 : 5 * 1024 * 1024; // 1MB für Favicon, 5MB für Logos
+    if (file.size > maxSize) {
+      toast({
+        title: "Datei zu groß",
+        description: `Maximale Größe: ${type === 'favicon' ? '1MB' : '5MB'}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setUploadProgress(prev => ({ ...prev, [type]: 0 }));
+      
+      // Simuliere Upload-Fortschritt
+      for (let i = 0; i <= 100; i += 10) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        setUploadProgress(prev => ({ ...prev, [type]: i }));
+      }
+
+      // Erstelle lokale URL für Vorschau
+      const objectUrl = URL.createObjectURL(file);
+      
+      // Aktualisiere Konfiguration
+      handleConfigChange(`visual.logo.${type}`, objectUrl);
+      
+      toast({
+        title: "Upload erfolgreich",
+        description: `${type === 'light' ? 'Hell' : type === 'dark' ? 'Dunkel' : 'Favicon'}-Logo wurde hochgeladen`,
+        variant: "default"
+      });
+
+      // Cleanup nach 5 Sekunden
+      setTimeout(() => {
+        setUploadProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[type];
+          return newProgress;
+        });
+      }, 5000);
+
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast({
+        title: "Upload fehlgeschlagen",
+        description: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+        variant: "destructive"
+      });
+    }
+  }, [handleConfigChange, toast]);
+
+  // Datei-Input triggern
+  const triggerFileInput = useCallback((type: 'light' | 'dark' | 'favicon') => {
+    const ref = type === 'light' ? lightLogoRef : type === 'dark' ? darkLogoRef : faviconRef;
+    ref.current?.click();
+  }, []);
+
+  // Datei-Input-Handler
+  const handleFileInputChange = useCallback((type: 'light' | 'dark' | 'favicon', event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleFileUpload(type, file);
+    }
+    // Reset input value
+    event.target.value = '';
+  }, [handleFileUpload]);
+
+  // Logo entfernen
+  const removeLogo = useCallback((type: 'light' | 'dark' | 'favicon') => {
+    const defaultUrl = type === 'favicon' ? '/images/placeholder-favicon.png' : '/images/placeholder-logo.png';
+    handleConfigChange(`visual.logo.${type}`, defaultUrl);
+    
+    toast({
+      title: "Logo entfernt",
+      description: `${type === 'light' ? 'Hell' : type === 'dark' ? 'Dunkel' : 'Favicon'}-Logo wurde zurückgesetzt`,
+      variant: "default"
+    });
+  }, [handleConfigChange, toast]);
 
   // Konfiguration speichern
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
+      setIsSaving(true);
+      
       // Hier würde die Konfiguration an die API gesendet werden
       console.log('Saving branding config:', config);
       
-      // TODO: Implement real API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simuliere API-Aufruf
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       setIsEditing(false);
-      // Erfolgsmeldung anzeigen
+      toast({
+        title: "Gespeichert",
+        description: "Ihre Branding-Einstellungen wurden erfolgreich gespeichert",
+        variant: "default"
+      });
     } catch (error) {
       console.error('Failed to save branding config:', error);
-      // Fehlermeldung anzeigen
+      toast({
+        title: "Fehler beim Speichern",
+        description: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
     }
-  };
+  }, [config, toast]);
 
   // Konfiguration zurücksetzen
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setConfig(defaultBranding);
     setIsEditing(false);
-  };
+    
+    // Clear localStorage
+    try {
+      localStorage.removeItem('duh-ai-gateway-branding');
+    } catch (error) {
+      console.error('Failed to clear localStorage:', error);
+    }
+    
+    toast({
+      title: "Zurückgesetzt",
+      description: "Alle Änderungen wurden verworfen und lokaler Speicher gelöscht",
+      variant: "default"
+    });
+  }, [toast]);
 
-  // Logo-Upload simulieren
-  const handleLogoUpload = (type: 'light' | 'dark' | 'favicon') => {
-    // TODO: Implement real file upload
-    const mockUrl = `/images/logo-${type}-${Date.now()}.png`;
-    handleConfigChange(`visual.logo.${type}`, mockUrl);
-  };
+  // Konfiguration exportieren
+  const handleExport = useCallback(() => {
+    try {
+      const dataStr = JSON.stringify(config, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `duh-ai-gateway-branding-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Exportiert",
+        description: "Branding-Konfiguration wurde erfolgreich heruntergeladen",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: "Export fehlgeschlagen",
+        description: "Ein Fehler ist beim Exportieren aufgetreten",
+        variant: "destructive"
+      });
+    }
+  }, [config, toast]);
+
+  // Konfiguration importieren
+  const handleImport = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedConfig = JSON.parse(e.target?.result as string);
+        
+        // Validate imported config structure
+        if (importedConfig && typeof importedConfig === 'object') {
+          setConfig(importedConfig);
+          
+          // Save to localStorage
+          try {
+            localStorage.setItem('duh-ai-gateway-branding', JSON.stringify(importedConfig));
+          } catch (error) {
+            console.error('Failed to save imported config to localStorage:', error);
+          }
+          
+          toast({
+            title: "Importiert",
+            description: "Branding-Konfiguration wurde erfolgreich importiert und gespeichert",
+            variant: "default"
+          });
+        } else {
+          throw new Error('Invalid config structure');
+        }
+      } catch (error) {
+        console.error('Import failed:', error);
+        toast({
+          title: "Import fehlgeschlagen",
+          description: "Die Datei konnte nicht gelesen werden oder hat ein ungültiges Format",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    reader.onerror = () => {
+      toast({
+        title: "Import fehlgeschlagen",
+        description: "Fehler beim Lesen der Datei",
+        variant: "destructive"
+      });
+    };
+    
+    reader.readAsText(file);
+    
+    // Reset input value
+    event.target.value = '';
+  }, [toast]);
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
+      {/* Hidden file inputs */}
+      <input
+        ref={lightLogoRef}
+        type="file"
+        accept="image/*"
+        onChange={(e) => handleFileInputChange('light', e)}
+        className="hidden"
+      />
+      <input
+        ref={darkLogoRef}
+        type="file"
+        accept="image/*"
+        onChange={(e) => handleFileInputChange('dark', e)}
+        className="hidden"
+      />
+      <input
+        ref={faviconRef}
+        type="file"
+        accept="image/*"
+        onChange={(e) => handleFileInputChange('favicon', e)}
+        className="hidden"
+      />
+
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -95,14 +364,24 @@ export default function BrandingPage() {
             {previewMode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             {previewMode ? 'Vorschau ausblenden' : 'Vorschau anzeigen'}
           </Button>
+          
           {isEditing ? (
             <>
-              <Button variant="outline" onClick={handleReset}>
+              <Button variant="outline" onClick={handleReset} disabled={isSaving}>
                 Zurücksetzen
               </Button>
-              <Button onClick={handleSave} className="flex items-center gap-2">
-                <Save className="h-4 w-4" />
-                Speichern
+              <Button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2">
+                {isSaving ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Speichern...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Speichern
+                  </>
+                )}
               </Button>
             </>
           ) : (
@@ -111,6 +390,26 @@ export default function BrandingPage() {
               Bearbeiten
             </Button>
           )}
+        </div>
+      </div>
+
+      {/* Import/Export Section */}
+      <div className="flex space-x-3">
+        <Button variant="outline" onClick={handleExport} className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Exportieren
+        </Button>
+        <div className="relative">
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleImport}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+          <Button variant="outline" className="flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            Importieren
+          </Button>
         </div>
       </div>
 
@@ -127,13 +426,12 @@ export default function BrandingPage() {
             <div className="space-y-4">
               {/* Logo Preview */}
               <div className="flex items-center space-x-4">
-                <img
+                <Image
                   src={config.visual.logo.light}
                   alt={config.visual.logo.alt}
+                  width={160}
+                  height={48}
                   className="h-12 w-auto"
-                  onError={(e) => {
-                    e.currentTarget.src = '/images/placeholder-logo.png';
-                  }}
                 />
                 <div>
                   <h3 className="font-semibold text-blue-800">{config.company.name}</h3>
@@ -299,73 +597,154 @@ export default function BrandingPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-4">
                   <Label>Logo (Hell)</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <img
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center relative">
+                    <Image
                       src={config.visual.logo.light}
                       alt="Light Logo"
+                      width={200}
+                      height={64}
                       className="h-16 w-auto mx-auto mb-2"
-                      onError={(e) => {
-                        e.currentTarget.src = '/images/placeholder-logo.png';
-                      }}
                     />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleLogoUpload('light')}
-                      disabled={!isEditing}
-                      className="w-full"
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Hochladen
-                    </Button>
+                    
+                    {/* Upload Progress */}
+                    {uploadProgress.light !== undefined && (
+                      <div className="absolute inset-0 bg-white/90 rounded-lg flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
+                          <p className="text-sm text-gray-600">{uploadProgress.light}%</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => triggerFileInput('light')}
+                        disabled={!isEditing}
+                        className="flex-1"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Hochladen
+                      </Button>
+                      {config.visual.logo.light !== '/images/placeholder-logo.png' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeLogo('light')}
+                          disabled={!isEditing}
+                          className="px-2"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <p className="text-xs text-gray-500 mt-2">
+                      Empfohlen: 200x64px, PNG/SVG
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <Label>Logo (Dunkel)</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <img
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center relative">
+                    <Image
                       src={config.visual.logo.dark}
                       alt="Dark Logo"
+                      width={200}
+                      height={64}
                       className="h-16 w-auto mx-auto mb-2"
-                      onError={(e) => {
-                        e.currentTarget.src = '/images/placeholder-logo.png';
-                      }}
                     />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleLogoUpload('dark')}
-                      disabled={!isEditing}
-                      className="w-full"
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Hochladen
-                    </Button>
+                    
+                    {/* Upload Progress */}
+                    {uploadProgress.dark !== undefined && (
+                      <div className="absolute inset-0 bg-white/90 rounded-lg flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
+                          <p className="text-sm text-gray-600">{uploadProgress.dark}%</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => triggerFileInput('dark')}
+                        disabled={!isEditing}
+                        className="flex-1"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Hochladen
+                      </Button>
+                      {config.visual.logo.dark !== '/images/placeholder-logo.png' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeLogo('dark')}
+                          disabled={!isEditing}
+                          className="px-2"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <p className="text-xs text-gray-500 mt-2">
+                      Empfohlen: 200x64px, PNG/SVG
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <Label>Favicon</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <img
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center relative">
+                    <Image
                       src={config.visual.logo.favicon}
                       alt="Favicon"
+                      width={32}
+                      height={32}
                       className="h-8 w-8 mx-auto mb-2"
-                      onError={(e) => {
-                        e.currentTarget.src = '/images/placeholder-favicon.png';
-                      }}
                     />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleLogoUpload('favicon')}
-                      disabled={!isEditing}
-                      className="w-full"
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Hochladen
-                    </Button>
+                    
+                    {/* Upload Progress */}
+                    {uploadProgress.favicon !== undefined && (
+                      <div className="absolute inset-0 bg-white/90 rounded-lg flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
+                          <p className="text-sm text-gray-600">{uploadProgress.favicon}%</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => triggerFileInput('favicon')}
+                        disabled={!isEditing}
+                        className="flex-1"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Hochladen
+                      </Button>
+                      {config.visual.logo.favicon !== '/images/placeholder-favicon.png' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeLogo('favicon')}
+                          disabled={!isEditing}
+                          className="px-2"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <p className="text-xs text-gray-500 mt-2">
+                      Empfohlen: 32x32px, ICO/PNG
+                    </p>
                   </div>
                 </div>
               </div>
@@ -405,9 +784,10 @@ export default function BrandingPage() {
                         onChange={(e) => handleConfigChange(`visual.colors.${name}`, e.target.value)}
                         disabled={!isEditing}
                         placeholder="#000000"
+                        className="flex-1"
                       />
                       <div
-                        className="w-12 h-10 rounded border"
+                        className="w-10 h-10 rounded border"
                         style={{ backgroundColor: color }}
                       />
                     </div>
@@ -417,18 +797,18 @@ export default function BrandingPage() {
             </CardContent>
           </Card>
 
-          {/* Typography Configuration */}
+          {/* Font Configuration */}
           <Card>
             <CardHeader>
-              <CardTitle>Typografie</CardTitle>
+              <CardTitle>Schriftarten</CardTitle>
               <CardDescription>
-                Wählen Sie Ihre Schriftarten
+                Wählen Sie die Schriftarten für Ihre App
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="font-primary">Hauptschriftart</Label>
+                  <Label htmlFor="font-primary">Primäre Schriftart</Label>
                   <Input
                     id="font-primary"
                     value={config.visual.fonts.primary}
@@ -437,9 +817,8 @@ export default function BrandingPage() {
                     placeholder="Inter, sans-serif"
                   />
                 </div>
-                
                 <div className="space-y-2">
-                  <Label htmlFor="font-secondary">Sekundärschriftart</Label>
+                  <Label htmlFor="font-secondary">Sekundäre Schriftart</Label>
                   <Input
                     id="font-secondary"
                     value={config.visual.fonts.secondary}
@@ -448,9 +827,8 @@ export default function BrandingPage() {
                     placeholder="Inter, sans-serif"
                   />
                 </div>
-                
                 <div className="space-y-2">
-                  <Label htmlFor="font-mono">Monospace-Schriftart</Label>
+                  <Label htmlFor="font-mono">Monospace Schriftart</Label>
                   <Input
                     id="font-mono"
                     value={config.visual.fonts.mono}
@@ -485,7 +863,6 @@ export default function BrandingPage() {
                     placeholder="Meine App"
                   />
                 </div>
-                
                 <div className="space-y-2">
                   <Label htmlFor="app-version">Version</Label>
                   <Input
@@ -499,7 +876,7 @@ export default function BrandingPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="app-description">App-Beschreibung</Label>
+                <Label htmlFor="app-description">Beschreibung</Label>
                 <Textarea
                   id="app-description"
                   value={config.app.description}
@@ -517,11 +894,9 @@ export default function BrandingPage() {
                   value={config.app.keywords.join(', ')}
                   onChange={(e) => handleConfigChange('app.keywords', e.target.value.split(',').map(k => k.trim()))}
                   disabled={!isEditing}
-                  placeholder="AI, Machine Learning, Chatbot"
+                  placeholder="AI, Gateway, Business"
                 />
-                <p className="text-sm text-gray-500">
-                  Trennen Sie Schlüsselwörter durch Kommas
-                </p>
+                <p className="text-xs text-gray-500">Trennen Sie Schlüsselwörter mit Kommas</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -532,10 +907,9 @@ export default function BrandingPage() {
                     value={config.app.author}
                     onChange={(e) => handleConfigChange('app.author', e.target.value)}
                     disabled={!isEditing}
-                    placeholder="Ihr Name oder Team"
+                    placeholder="Ihr Name"
                   />
                 </div>
-                
                 <div className="space-y-2">
                   <Label htmlFor="app-copyright">Copyright</Label>
                   <Input
@@ -543,7 +917,7 @@ export default function BrandingPage() {
                     value={config.app.copyright}
                     onChange={(e) => handleConfigChange('app.copyright', e.target.value)}
                     disabled={!isEditing}
-                    placeholder="© 2024 Ihr Unternehmen"
+                    placeholder="© 2025"
                   />
                 </div>
               </div>
@@ -555,19 +929,19 @@ export default function BrandingPage() {
             <CardHeader>
               <CardTitle>Lokalisierung</CardTitle>
               <CardDescription>
-                Sprache und regionale Einstellungen
+                Sprache, Zeitzone und Format-Einstellungen
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="default-language">Standardsprache</Label>
+                  <Label htmlFor="locale-language">Standardsprache</Label>
                   <select
-                    id="default-language"
+                    id="locale-language"
                     value={config.localization.defaultLanguage}
                     onChange={(e) => handleConfigChange('localization.defaultLanguage', e.target.value)}
                     disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-2 border rounded-md"
                   >
                     <option value="de">Deutsch</option>
                     <option value="en">English</option>
@@ -575,53 +949,48 @@ export default function BrandingPage() {
                     <option value="es">Español</option>
                   </select>
                 </div>
-                
                 <div className="space-y-2">
-                  <Label htmlFor="timezone">Zeitzone</Label>
+                  <Label htmlFor="locale-timezone">Zeitzone</Label>
                   <select
-                    id="timezone"
+                    id="locale-timezone"
                     value={config.localization.timezone}
                     onChange={(e) => handleConfigChange('localization.timezone', e.target.value)}
                     disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-2 border rounded-md"
                   >
-                    <option value="Europe/Berlin">Europe/Berlin (CET/CEST)</option>
-                    <option value="Europe/London">Europe/London (GMT/BST)</option>
-                    <option value="America/New_York">America/New_York (EST/EDT)</option>
-                    <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                    <option value="Europe/Berlin">Europe/Berlin</option>
+                    <option value="Europe/London">Europe/London</option>
+                    <option value="America/New_York">America/New_York</option>
+                    <option value="Asia/Tokyo">Asia/Tokyo</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="date-format">Datumsformat</Label>
+                  <Label htmlFor="locale-dateformat">Datumsformat</Label>
                   <select
-                    id="date-format"
+                    id="locale-dateformat"
                     value={config.localization.dateFormat}
                     onChange={(e) => handleConfigChange('localization.dateFormat', e.target.value)}
                     disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-2 border rounded-md"
                   >
-                    <option value="DD.MM.YYYY">DD.MM.YYYY (Deutsch)</option>
-                    <option value="MM/DD/YYYY">MM/DD/YYYY (US)</option>
-                    <option value="YYYY-MM-DD">YYYY-MM-DD (ISO)</option>
+                    <option value="DD.MM.YYYY">DD.MM.YYYY</option>
+                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                   </select>
                 </div>
-                
                 <div className="space-y-2">
-                  <Label htmlFor="currency">Währung</Label>
+                  <Label htmlFor="locale-currency">Währung</Label>
                   <select
-                    id="currency"
+                    id="locale-currency"
                     value={config.localization.currency}
                     onChange={(e) => handleConfigChange('localization.currency', e.target.value)}
                     disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full p-2 border rounded-md"
                   >
                     <option value="EUR">EUR (€)</option>
                     <option value="USD">USD ($)</option>
                     <option value="GBP">GBP (£)</option>
-                    <option value="CHF">CHF (CHF)</option>
+                    <option value="JPY">JPY (¥)</option>
                   </select>
                 </div>
               </div>
@@ -629,40 +998,49 @@ export default function BrandingPage() {
           </Card>
         </TabsContent>
 
-        {/* Features Configuration Tab */}
+        {/* Features Tab */}
         <TabsContent value="features" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Feature-Verwaltung</CardTitle>
+              <CardTitle>Feature-Flags</CardTitle>
               <CardDescription>
-                Aktivieren oder deaktivieren Sie bestimmte App-Features
+                Aktivieren oder deaktivieren Sie bestimmte Features
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(config.features).map(([feature, enabled]) => (
-                  <div key={feature} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h3 className="font-medium text-gray-900 capitalize">
-                        {feature.replace(/([A-Z])/g, ' $1').trim()}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {enabled ? 'Feature ist aktiviert' : 'Feature ist deaktiviert'}
+              <div className="space-y-4">
+                {Object.entries(config.features).map(([name, enabled]) => (
+                  <div key={name} className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="capitalize">
+                        {name.replace(/([A-Z])/g, ' $1').trim()}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {name === 'branding' && 'Ermöglicht die Anpassung des App-Designs'}
+                        {name === 'analytics' && 'Sammelt Nutzungsdaten für Verbesserungen'}
+                        {name === 'training' && 'Ermöglicht das Training eigener AI-Modelle'}
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge variant={enabled ? 'default' : 'secondary'}>
-                        {enabled ? 'Aktiv' : 'Inaktiv'}
-                      </Badge>
-                      {isEditing && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleConfigChange(`features.${feature}`, !enabled)}
-                        >
-                          {enabled ? 'Deaktivieren' : 'Aktivieren'}
-                        </Button>
+                      {enabled ? (
+                        <Badge variant="default" className="flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          Aktiviert
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          Deaktiviert
+                        </Badge>
                       )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleConfigChange(`features.${name}`, !enabled)}
+                        disabled={!isEditing}
+                      >
+                        {enabled ? 'Deaktivieren' : 'Aktivieren'}
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -671,32 +1049,6 @@ export default function BrandingPage() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Export/Import Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Konfiguration verwalten</CardTitle>
-          <CardDescription>
-            Exportieren oder importieren Sie Ihre Branding-Konfiguration
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex space-x-4">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              Konfiguration exportieren
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              Konfiguration importieren
-            </Button>
-            <Button variant="outline" onClick={handleReset} className="flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Zurücksetzen
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
