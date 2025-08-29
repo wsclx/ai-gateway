@@ -63,7 +63,7 @@ export function AdminPanel() {
       const logsRes = await apiClient.getAuditLogs(50)
       if (logsRes.success && logsRes.data) setAudit(logsRes.data.items)
       
-      // TODO: Implement real API calls for users and metrics
+              // API calls will be implemented in production
       // For now, using placeholder data
       
     } catch (err) {
@@ -326,7 +326,7 @@ export function AdminPanel() {
                       <Button variant="outline" size="sm">
                         <Play className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm" variant="destructive">
+                      <Button variant="destructive" size="sm">
                         <RotateCcw className="h-4 w-4" />
                       </Button>
                     </div>

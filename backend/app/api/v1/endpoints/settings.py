@@ -11,7 +11,7 @@ from app.schemas.settings import (
     UserSettingsUpdate,
     UserSettingsResponse
 )
-from app.core.authz import get_current_local_user
+from app.core.authz import get_current_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -19,7 +19,7 @@ router = APIRouter()
 
 @router.get("/settings", response_model=UserSettingsResponse)
 async def get_user_settings(
-    current_user: User = Depends(get_current_local_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get current user's settings"""
@@ -76,7 +76,7 @@ async def get_user_settings(
 @router.post("/settings", response_model=UserSettingsResponse)
 async def create_user_settings(
     settings_data: UserSettingsCreate,
-    current_user: User = Depends(get_current_local_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Create or update user settings"""
@@ -145,7 +145,7 @@ async def create_user_settings(
 @router.put("/settings", response_model=UserSettingsResponse)
 async def update_user_settings(
     settings_data: UserSettingsUpdate,
-    current_user: User = Depends(get_current_local_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Update user settings"""

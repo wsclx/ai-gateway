@@ -554,7 +554,7 @@ export function AnalyticsPanel() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {analyticsData.costs.byModel.map((model) => (
+                {analyticsData.costs.byModel.map((model: any) => (
                   <div key={model.model} className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>{model.model}</span>
