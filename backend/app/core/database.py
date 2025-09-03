@@ -58,6 +58,6 @@ async def init_db():
     """Initialize database tables"""
     async with engine.begin() as conn:
         # Import models here to ensure they are registered
-        from app.models import user, assistant, chat, audit
+        from app.models import user, assistant, chat, audit, ticket, config
         
         await conn.run_sync(Base.metadata.create_all)

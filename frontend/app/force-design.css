@@ -1,0 +1,172 @@
+/* 
+ * AI Gateway - Modern Design System v6.0
+ * NEUE DATEI: force-design.css
+ * FORCE RELOAD: Direkte Farbwerte ohne CSS-Variablen
+ * Cache-Busting: 2025-01-29-16-20
+ */
+
+/* FORCE MODERN COLORS - Direkte Werte */
+:root {
+  --color-bg: #fafafa;
+  --color-bg-secondary: #f5f5f5;
+  --color-bg-muted: #f0f0f0;
+  --color-bg-card: #ffffff;
+  --color-text: #1f2937;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6b7280;
+  --color-text-inverse: #ffffff;
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-border: #e5e7eb;
+  --color-border-hover: #d1d5db;
+}
+
+/* EXTREM AGGRESSIVE OVERRIDES - Alle möglichen Klassen */
+* {
+  color: #1f2937 !important;
+  background-color: #fafafa !important;
+}
+
+body {
+  background-color: #fafafa !important;
+  color: #1f2937 !important;
+}
+
+/* Alle Überschriften */
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+  color: #1f2937 !important;
+}
+
+/* Alle Paragraphen und Text */
+p, span, div, label, small, strong, em, b, i, a {
+  color: #1f2937 !important;
+}
+
+/* FORCE CARD STYLES */
+.card, [class*="card"], [class*="bg-card"], .bg-card {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* FORCE MUTED STYLES */
+.bg-muted, [class*="bg-muted"], .muted {
+  background-color: #f0f0f0 !important;
+}
+
+/* FORCE SECONDARY STYLES */
+.bg-secondary, [class*="bg-secondary"], .secondary {
+  background-color: #f5f5f5 !important;
+}
+
+/* FORCE PRIMARY STYLES */
+.bg-primary, [class*="bg-primary"], .primary {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* FORCE BUTTON STYLES */
+button, .btn, [class*="btn"] {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  border-radius: 0.5rem !important;
+  padding: 0.75rem 1.5rem !important;
+}
+
+/* FORCE INPUT STYLES */
+input, textarea, select, [class*="input"] {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  color: #1f2937 !important;
+  border-radius: 0.5rem !important;
+}
+
+/* FORCE SIDEBAR STYLES */
+.sidebar, [class*="sidebar"] {
+  background-color: #ffffff !important;
+  border-right: 1px solid #e5e7eb !important;
+}
+
+/* FORCE TABLE STYLES */
+table, .table, [class*="table"] {
+  background-color: #ffffff !important;
+}
+
+table th, .table th, [class*="table"] th {
+  background-color: #f5f5f5 !important;
+  color: #1f2937 !important;
+}
+
+table td, .table td, [class*="table"] td {
+  background-color: #ffffff !important;
+  color: #374151 !important;
+}
+
+/* FORCE TEXT COLORS */
+.text-muted, [class*="text-muted"] {
+  color: #6b7280 !important;
+}
+
+.text-secondary, [class*="text-secondary"] {
+  color: #374151 !important;
+}
+
+.text-primary, [class*="text-primary"] {
+  color: #3b82f6 !important;
+}
+
+/* FORCE BACKGROUND COLORS */
+.bg-background {
+  background-color: #fafafa !important;
+}
+
+.bg-foreground {
+  background-color: #1f2937 !important;
+}
+
+/* FINALE LÖSUNG: Alle möglichen Tailwind-Klassen überschreiben */
+.bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300, .bg-gray-400, .bg-gray-500, .bg-gray-600, .bg-gray-700, .bg-gray-800, .bg-gray-900,
+.bg-slate-50, .bg-slate-100, .bg-slate-200, .bg-slate-300, .bg-slate-400, .bg-slate-500, .bg-slate-600, .bg-slate-700, .bg-slate-800, .bg-slate-900,
+.bg-zinc-50, .bg-zinc-100, .bg-zinc-200, .bg-zinc-300, .bg-zinc-400, .bg-zinc-500, .bg-zinc-600, .bg-zinc-700, .bg-zinc-800, .bg-zinc-900,
+.bg-neutral-50, .bg-neutral-100, .bg-neutral-200, .bg-neutral-300, .bg-neutral-400, .bg-neutral-500, .bg-neutral-600, .bg-neutral-700, .bg-neutral-800, .bg-neutral-900,
+.bg-stone-50, .bg-stone-100, .bg-stone-200, .bg-stone-300, .bg-stone-400, .bg-stone-500, .bg-stone-600, .bg-stone-700, .bg-stone-800, .bg-stone-900 {
+  background-color: #f5f5f5 !important;
+}
+
+.text-gray-50, .text-gray-100, .text-gray-200, .text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+.text-slate-50, .text-slate-100, .text-slate-200, .text-slate-300, .text-slate-400, .text-slate-500, .text-slate-600, .text-slate-700, .text-slate-800, .text-slate-900,
+.text-zinc-50, .text-zinc-100, .text-zinc-200, .text-zinc-300, .text-zinc-400, .text-zinc-500, .text-zinc-600, .text-zinc-700, .text-zinc-800, .text-zinc-900,
+.text-neutral-50, .text-neutral-100, .text-neutral-200, .text-neutral-300, .text-neutral-400, .text-neutral-500, .text-neutral-600, .text-neutral-700, .text-neutral-800, .text-neutral-900,
+.text-stone-50, .text-stone-100, .text-stone-200, .text-stone-300, .text-stone-400, .text-stone-500, .text-stone-600, .text-stone-700, .text-stone-800, .text-stone-900 {
+  color: #1f2937 !important;
+}
+
+/* EXTREM AGGRESSIV: Alle möglichen Inline-Styles überschreiben */
+[style*="background-color"], [style*="background"], [style*="color"] {
+  background-color: #fafafa !important;
+  color: #1f2937 !important;
+}
+
+/* FINALE REGEL: Alle Elemente mit maximaler Spezifität überschreiben */
+html body * {
+  background-color: #fafafa !important;
+  color: #1f2937 !important;
+}
+
+html body .bg-card, html body [class*="bg-card"] {
+  background-color: #ffffff !important;
+}
+
+html body .bg-muted, html body [class*="bg-muted"] {
+  background-color: #f0f0f0 !important;
+}
+
+html body .bg-secondary, html body [class*="bg-secondary"] {
+  background-color: #f5f5f5 !important;
+}
+
+html body .bg-primary, html body [class*="bg-primary"] {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}

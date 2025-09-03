@@ -18,6 +18,7 @@ from app.schemas.chat import (
     ThreadListResponse,
 )
 from app.core.openai_client import openai_client
+from app.core.training.context_manager import ContextManager
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

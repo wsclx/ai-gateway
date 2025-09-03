@@ -68,35 +68,45 @@ async def create_demo_data():
             # Create assistants
             assistants = [
                 Assistant(
-                    name="General Assistant",
+                    name="Newsletter Assistant",
                     provider="openai",
-                    model="gpt-4",
-                    system_prompt="Du bist ein hilfreicher KI-Assistent für verschiedene Aufgaben.",
-                    dept_scope=["it", "hr", "marketing", "sales"],
+                    model="gpt-4o-mini",
+                    system_prompt="Hilf beim Erstellen und Optimieren von Newslettern (Struktur, Betreff, Preheader, A/B-Varianten).",
+                    dept_scope=["marketing"],
                     tools=[],
                     visibility="internal",
-                    provider_assistant_id="asst_general"
+                    provider_assistant_id="asst_newsletter"
                 ),
                 Assistant(
-                    name="IT Support",
+                    name="Spendenaufruf Assistant",
                     provider="openai",
-                    model="gpt-4",
-                    system_prompt="Du bist ein IT-Support-Assistent, spezialisiert auf IT-bezogene Fragen.",
-                    dept_scope=["it"],
+                    model="gpt-4o-mini",
+                    system_prompt="Erstelle wirkungsvolle Spendenaufrufe und Landingpage-Texte in professionellem Ton, DSGVO-konform.",
+                    dept_scope=["marketing", "sales"],
                     tools=[],
                     visibility="internal",
-                    provider_assistant_id="asst_it"
+                    provider_assistant_id="asst_donation"
                 ),
                 Assistant(
-                    name="HR Assistant",
+                    name="Social Media Assistant",
                     provider="openai",
-                    model="gpt-4",
-                    system_prompt="Du bist ein HR-Assistent, der bei HR-bezogenen Fragen hilft.",
-                    dept_scope=["hr"],
+                    model="gpt-4o-mini",
+                    system_prompt="Liefere Social-Posts in unterschiedlichen Längen/Formaten (Twitter/X, LinkedIn, Instagram), inkl. Hashtags.",
+                    dept_scope=["marketing"],
                     tools=[],
                     visibility="internal",
-                    provider_assistant_id="asst_hr"
-                )
+                    provider_assistant_id="asst_social"
+                ),
+                Assistant(
+                    name="Content Assistant (Bilder)",
+                    provider="openai",
+                    model="gpt-4o-mini",
+                    system_prompt="Generiere Bildideen und Alt-Texte; optional promptet für Bildgeneratoren (keine Bildgenerierung lokal).",
+                    dept_scope=["marketing", "design"],
+                    tools=[],
+                    visibility="internal",
+                    provider_assistant_id="asst_content_img"
+                ),
             ]
             
             for assistant in assistants:

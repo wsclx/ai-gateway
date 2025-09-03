@@ -1,59 +1,243 @@
-# Cursor Rules für AI Gateway Design-System
+# AI Gateway - Professional Design System
 
-## Design-System Integration
-Always read and follow: /design/tokens.json, /design/components.md, /design/layout.md
-Enforce: No hardcoded hex colors; use design tokens from /design/tokens.json
-Accessibility: Follow /design/a11y.md; include keyboard focus and ARIA attributes
-Performance: Respect /design/perf.md budgets and guidelines
+## CRITICAL DESIGN RULES
 
-## Code Style & Architecture
-Use existing Tailwind config with design token integration
-Prefer shadcn/ui primitives over custom components
-Follow TypeScript best practices with strict typing
-Use absolute imports with @/ prefix
+### ❌ NEVER USE:
+- Tailwind default gradient colors (from-blue-500 to-blue-600)
+- Rainbow colored cards or components
+- Multiple bright colors in one view
+- Hardcoded hex values
+- Inline styles
+- More than 2-3 colors per component
 
-## UI/UX Guidelines
-- Mobile-first responsive design
-- Consistent spacing using design token values
-- Professional, clean appearance without garish colors
-- Intuitive workflow-logical UI with good supporting features
-- Accessibility-first approach with proper ARIA labels
+### ✅ ALWAYS USE:
+- Monochromatic design with subtle accents
+- Design tokens from tailwind.config.ts
+- Professional color palette (bg, text, border classes)
+- Consistent spacing and typography
+- Subtle animations and transitions
+- Glass effects sparingly
 
-## Component Standards
-- Use Radix UI primitives through shadcn/ui
-- Include proper loading, empty, and error states
-- Implement proper form validation with inline errors
-- Use consistent motion durations (150ms, 250ms, 350ms)
-- Respect prefers-reduced-motion user preference
+## COLOR SYSTEM
 
-## White-Labeling Support
-- Use branding configuration from /lib/branding.ts
-- Implement CSS variables for easy customization
-- Support both light and dark themes
-- Make all text content configurable
-- Use placeholder text format: ***[Platzhalter: Beschreibung]***
+```css
+/* Primary Palette */
+primary: '#3b82f6' - Main brand color
+primary-hover: '#2563eb' - Hover state only
+primary-foreground: '#ffffff' - Text on primary
 
-## Testing Requirements
-- Include Playwright E2E tests for complex interactions
-- Test accessibility with keyboard navigation
-- Verify responsive behavior across breakpoints
-- Test with reduced motion preferences
+/* Neutral System */
+bg: '#fafafa' - Main background
+bg-secondary: '#f5f5f5' - Section backgrounds  
+bg-muted: '#f0f0f0' - Hover states
+bg-card: '#ffffff' - Card backgrounds
 
-## File Organization
-- Place components in appropriate feature directories
-- Use consistent naming: kebab-case for files, PascalCase for components
-- Group related functionality together
-- Maintain clear separation of concerns
+text: '#1f2937' - Primary text
+text-secondary: '#374151' - Secondary text
+text-muted: '#6b7280' - Muted text
 
-## Performance Standards
-- LCP < 2.5s, FID < 100ms, CLS < 0.1
-- Bundle size < 150KB initial, < 50KB per route
-- Implement proper code splitting and lazy loading
-- Optimize images and use Next.js Image component
+border: '#e5e7eb' - Default borders
+border-hover: '#d1d5db' - Hover borders
 
-## Accessibility Requirements
-- WCAG 2.1 AA compliance
-- Proper contrast ratios (4.5:1 for normal text)
-- Keyboard navigation support
-- Screen reader compatibility
-- Focus management and visible focus indicators
+/* Semantic (Use Sparingly) */
+success: '#10b981' - Success states only
+warning: '#f59e0b' - Warning states only
+error: '#ef4444' - Error states only
+accent: '#8b5cf6' - Secondary accent
+```
+
+## COMPONENT PATTERNS
+
+### Cards
+```tsx
+// ✅ CORRECT
+<div className="bg-card rounded-xl border border-border p-6 
+                hover:shadow-lg hover:border-primary/20 
+                transition-all duration-normal">
+```
+
+### Buttons
+```tsx
+// Primary
+className="px-4 py-2 bg-primary text-white rounded-lg 
+          hover:bg-primary-hover active:scale-[0.98] 
+          transition-all duration-fast"
+
+// Secondary  
+className="px-4 py-2 bg-bg-secondary text-text rounded-lg
+          border border-border hover:bg-bg-muted
+          transition-all duration-fast"
+
+// Ghost
+className="px-4 py-2 text-text-secondary hover:text-text
+          hover:bg-bg-secondary rounded-lg
+          transition-all duration-fast"
+```
+
+### Status Indicators
+```tsx
+// Use subtle backgrounds with colored text/icons
+<div className="bg-success/10 text-success">
+<div className="bg-warning/10 text-warning">
+<div className="bg-error/10 text-error">
+
+// NOT bright colored backgrounds
+```
+
+### Animations
+```tsx
+// Transitions
+transition-all duration-fast    // 150ms
+transition-all duration-normal  // 200ms
+transition-all duration-slow    // 300ms
+
+// Hover scales
+hover:scale-[1.02]  // Cards
+hover:scale-[1.05]  // Small elements
+active:scale-[0.98] // Buttons
+
+// Shadows
+shadow-sm hover:shadow-md
+shadow-md hover:shadow-lg
+```
+
+## TYPOGRAPHY
+
+```css
+Font: Inter (system fallback)
+Sizes: text-xs, text-sm, text-base, text-lg, text-xl, text-2xl, text-3xl
+Weights: font-normal, font-medium, font-semibold, font-bold
+Colors: text-text, text-text-secondary, text-text-muted
+```
+
+## SPACING
+
+Use consistent spacing scale:
+- p-2 (8px), p-3 (12px), p-4 (16px), p-6 (24px), p-8 (32px)
+- gap-2, gap-3, gap-4, gap-6
+- space-y-2, space-y-4, space-y-6
+
+## LAYOUT PRINCIPLES
+
+1. **Visual Hierarchy**: Clear distinction between primary, secondary, tertiary
+2. **White Space**: Generous padding and margins
+3. **Alignment**: Consistent grid and flexbox patterns
+4. **Responsive**: Mobile-first, works on all screens
+5. **Accessibility**: Proper contrast, focus states, ARIA labels
+
+## FILE STRUCTURE
+
+```
+/app
+  /dashboard - Dashboard pages
+  /admin - Admin pages
+  /(auth) - Auth pages
+  layout.tsx - Root layout
+  page.tsx - Home page
+
+/components
+  /ui - Reusable UI components
+  /features - Feature-specific components
+  sidebar-navigation.tsx
+  providers.tsx
+
+/lib
+  /hooks - Custom React hooks
+  /utils - Utility functions
+  /api - API client functions
+```
+
+## CODE STYLE
+
+- TypeScript with strict mode
+- Functional components with hooks
+- Named exports for components
+- Proper error boundaries
+- Loading and error states
+- Optimistic updates where appropriate
+
+## PERFORMANCE
+
+- Lazy load heavy components
+- Use Next.js Image for images
+- Implement proper code splitting
+- Minimize bundle size
+- Cache API responses appropriately
+
+## EXAMPLES OF GOOD PATTERNS
+
+### Professional Stats Card
+```tsx
+<div className="group bg-card rounded-xl border border-border p-6
+                hover:shadow-lg hover:border-primary/20 
+                transition-all duration-normal">
+  <div className="flex items-start justify-between">
+    <div>
+      <p className="text-text-muted text-sm">Label</p>
+      <p className="text-2xl font-bold text-text mt-1">Value</p>
+      <p className="text-sm text-text-secondary mt-2">
+        <span className="text-success">↑ 12%</span> vs last period
+      </p>
+    </div>
+    <div className="p-3 bg-bg-secondary rounded-lg 
+                    group-hover:bg-primary/10 transition-colors">
+      <Icon className="h-5 w-5 text-text-secondary 
+                       group-hover:text-primary" />
+    </div>
+  </div>
+</div>
+```
+
+### Clean Table Row
+```tsx
+<tr className="border-b border-border hover:bg-bg-secondary/50 
+               transition-colors">
+  <td className="px-4 py-3 text-text">Content</td>
+  <td className="px-4 py-3 text-text-secondary">Secondary</td>
+  <td className="px-4 py-3">
+    <span className="px-2 py-1 bg-success/10 text-success 
+                     rounded-full text-xs">Active</span>
+  </td>
+</tr>
+```
+
+## FORBIDDEN PATTERNS
+
+### ❌ Rainbow Cards
+```tsx
+// NEVER DO THIS
+<div className="bg-gradient-to-r from-purple-500 to-purple-600">
+```
+
+### ❌ Too Many Colors
+```tsx
+// NEVER DO THIS
+<div className="bg-blue-500 text-yellow-300 border-red-500">
+```
+
+### ❌ Inconsistent Spacing
+```tsx
+// NEVER DO THIS
+<div className="p-3 mb-7 mt-2 ml-5">
+```
+
+## TESTING
+
+- Test all interactive elements
+- Verify responsive behavior
+- Check accessibility with keyboard
+- Test loading and error states
+- Verify animations respect prefers-reduced-motion
+
+## DEPLOYMENT CHECKLIST
+
+✅ All colors use design tokens
+✅ No console errors or warnings
+✅ Lighthouse score > 90
+✅ Responsive on all breakpoints
+✅ Accessible (WCAG AA)
+✅ Loading states implemented
+✅ Error boundaries in place
+✅ Performance optimized
+
+Remember: Professional, Clean, Minimal, Elegant. Think Bloomberg Terminal meets modern SaaS.

@@ -80,7 +80,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">Anmelden</CardTitle>
           <CardDescription className="text-center">
-            Melde dich bei deinem DUH AI Gateway an
+            Melde dich bei deinem AI Gateway an
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

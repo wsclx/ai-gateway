@@ -1,72 +1,115 @@
 version: '3.9'
 
 services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: aigateway-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-aigateway}
+      POSTGRES_USER: ${DB_USER:-aigateway}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-aigateway}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aigateway-network
+
+  # Backend API
   backend:
     build:
       context: ./backend
-    container_name: audiencly-backend
-    environment:
-      - PYTHONUNBUFFERED=1
-      - ENVIRONMENT=development
-      - DATABASE_URL=${DATABASE_URL:-postgresql://audiencly:audiencly_secure_password@db:5432/audiencly}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
-      - MS_TENANT_ID=${MS_TENANT_ID}
-      - MS_CLIENT_ID=${MS_CLIENT_ID}
-      - MS_CLIENT_SECRET=${MS_CLIENT_SECRET}
-      - MS_REDIRECT_URI=${MS_REDIRECT_URI:-http://localhost:5556/auth/callback}
-    command: ["python","-m","uvicorn","main:app","--host","0.0.0.0","--port","8002"]
-    working_dir: /app
-    ports:
-      - "5555:8002"
+      dockerfile: Dockerfile
+      args:
+        - PYTHON_VERSION=${PYTHON_VERSION:-3.11}
+    container_name: aigateway-backend
+    restart: unless-stopped
     depends_on:
-      - db
-    networks: [appnet]
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-aigateway}:${DB_PASSWORD:-changeme}@db:5432/${DB_NAME:-aigateway}
+      - SECRET_KEY=${SECRET_KEY:-will-be-generated}
+      - AI_PROVIDER=${AI_PROVIDER:-demo}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://localhost:11434}
+      - MS_TENANT_ID=${MS_TENANT_ID:-}
+      - MS_CLIENT_ID=${MS_CLIENT_ID:-}
+      - MS_CLIENT_SECRET=${MS_CLIENT_SECRET:-}
+    volumes:
+      - ./backend/app:/app/app
+      - ./data/uploads:/app/uploads
+    ports:
+      - "${BACKEND_PORT:-5555}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - aigateway-network
 
+  # Frontend
   frontend:
     build:
       context: ./frontend
-    container_name: audiencly-frontend
-    environment:
-      - PORT=3000
-      - NEXT_TELEMETRY_DISABLED=1
-      - NEXT_PUBLIC_API_URL=http://localhost:5559
-    working_dir: /app
-    ports:
-      - "5556:3000"
+      dockerfile: Dockerfile
+      args:
+        - NODE_VERSION=${NODE_VERSION:-20}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5555}
+    container_name: aigateway-frontend
+    restart: unless-stopped
     depends_on:
       - backend
-    networks: [appnet]
-
-  db:
-    image: postgres:16-alpine
-    container_name: audiencly-db
     environment:
-      - POSTGRES_USER=audiencly
-      - POSTGRES_PASSWORD=audiencly_secure_password
-      - POSTGRES_DB=audiencly
+      - NEXT_PUBLIC_API_URL=http://localhost:5555/api/v1
+      - NEXT_PUBLIC_APP_NAME=AI Gateway
+      - NEXT_PUBLIC_APP_VERSION=1.0.0
     ports:
-      - "5557:5432"
-    volumes:
-      - dbdata:/var/lib/postgresql/data
-    networks: [appnet]
+      - "${FRONTEND_PORT:-5556}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - aigateway-network
 
+  # Nginx Reverse Proxy (Optional - for production)
   nginx:
     image: nginx:alpine
-    container_name: audiencly-nginx
-    volumes:
-      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    ports:
-      - "5558:5558"
-      - "5559:5559"
+    container_name: aigateway-proxy
+    restart: unless-stopped
     depends_on:
-      - backend
       - frontend
-    networks: [appnet]
+      - backend
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    profiles:
+      - production
+    networks:
+      - aigateway-network
 
 volumes:
-  dbdata:
+  postgres_data:
+    driver: local
 
 networks:
-  appnet:
+  aigateway-network:
     driver: bridge
