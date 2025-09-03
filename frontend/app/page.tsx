@@ -1,195 +1,157 @@
-'use client'
+'use client';
 
-import { useState, useCallback } from 'react'
-import { ChatInterface } from '@/components/chat-interface'
-import { AssistantPicker } from '@/components/assistant-picker'
-import { AnalyticsPanel } from '@/components/analytics-panel'
-import { AdminPanel } from '@/components/admin-panel'
-import { SettingsPanel } from '@/components/settings-panel'
-import { Bot, BarChart3, Settings, SlidersHorizontal, LogIn, Palette } from 'lucide-react'
-import Link from 'next/link'
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { MessageSquare, Bot, Sparkles, TrendingUp, Users, Shield, Settings } from 'lucide-react';
+import { assistantsApi, Assistant } from '@/lib/api-client';
 
 export default function HomePage() {
-  const [selectedAssistant, setSelectedAssistant] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState("chat")
+  const [assistants, setAssistants] = useState<Assistant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  const handleTabChange = useCallback((tab: string) => {
-    // Tab changed
-    setActiveTab(tab)
-  }, [])
+  useEffect(() => {
+    const fetchAssistants = async () => {
+      try {
+        const data = await assistantsApi.getAssistants();
+        setAssistants(data);
+      } catch (err) {
+        setError('Fehler beim Laden der Assistenten');
+        console.error('Failed to load assistants:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleAssistantSelect = useCallback((assistantId: string) => {
-    // Assistant selected
-    setSelectedAssistant(assistantId)
-  }, [])
+    fetchAssistants();
+  }, []);
 
-  const handleButtonClick = useCallback((action: string) => {
-    // Button clicked
-    switch (action) {
-      case 'chat':
-        setActiveTab('chat')
-        break
-      case 'analytics':
-        setActiveTab('analytics')
-        break
-      case 'settings':
-        setActiveTab('settings')
-        break
-      case 'admin':
-        setActiveTab('admin')
-        break
-      case 'branding':
-        // Navigate to branding page
-        window.location.href = '/branding'
-        break
-      default:
-        // Unknown action
-    }
-  }, [])
+  const handleAssistantClick = (assistant: Assistant) => {
+    router.push(`/chat?assistant=${assistant.id}`);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      active: 'secondary' as const,
+      inactive: 'destructive' as const,
+      maintenance: 'secondary' as const
+    };
+
+    const getStatusText = (status: string) => {
+      switch (status) {
+        case 'active':
+          return 'Aktiv';
+        case 'inactive':
+          return 'Inaktiv';
+        case 'maintenance':
+          return 'Wartung';
+        default:
+          return status;
+      }
+    };
+
+    return (
+      <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
+        {getStatusText(status)}
+      </Badge>
+    );
+  };
+
+  const getModelIcon = (model: string) => {
+    if (model.includes('gpt')) return <Sparkles className="h-4 w-4" />;
+    if (model.includes('claude')) return <Bot className="h-4 w-4" />;
+    return <MessageSquare className="h-4 w-4" />;
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-text-muted">Lade Assistenten...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <p className="text-error mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            Erneut versuchen
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
-          {/* Sidebar Navigation */}
-          <aside className="lg:col-span-1 hidden lg:block">
-            <nav className="panel p-2 space-y-2">
-              <button
-                onClick={() => handleButtonClick('chat')}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
-                  activeTab === 'chat' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                }`}
-                type="button"
-              >
-                <Bot className="h-4 w-4" /> Chat
-              </button>
-              <button
-                onClick={() => handleButtonClick('analytics')}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
-                  activeTab === 'analytics' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                }`}
-                type="button"
-              >
-                <BarChart3 className="h-4 w-4" /> Analytics
-              </button>
-              <button
-                onClick={() => handleButtonClick('settings')}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
-                  activeTab === 'settings' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                }`}
-                type="button"
-              >
-                <Settings className="h-4 w-4" /> Einstellungen
-              </button>
-              <button
-                onClick={() => handleButtonClick('admin')}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
-                  activeTab === 'admin' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                }`}
-                type="button"
-              >
-                <SlidersHorizontal className="h-4 w-4" /> Admin
-              </button>
-              <button
-                onClick={() => handleButtonClick('branding')}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors hover:bg-muted"
-                type="button"
-              >
-                <Palette className="h-4 w-4" /> Branding
-              </button>
-            </nav>
-          </aside>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-text-primary mb-2">
+          Willkommen bei AI Gateway
+        </h1>
+        <p className="text-text-secondary">
+          Wählen Sie einen AI-Assistenten für Ihre Aufgaben
+        </p>
+      </div>
 
-          {/* Content */}
-          <section className="lg:col-span-5 space-y-6">
-            {/* Mobile / Small-screen top navigation */}
-            <nav className="panel p-2 flex lg:hidden gap-2 flex-wrap">
-              <button
-                onClick={() => handleButtonClick('chat')}
-                className={`flex-1 min-w-0 px-3 py-2 rounded-md text-sm transition-colors ${
-                  activeTab === 'chat' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                }`}
-              >
-                Chat
-              </button>
-              <button
-                onClick={() => handleButtonClick('analytics')}
-                className={`flex-1 min-w-0 px-3 py-2 rounded-md text-sm transition-colors ${
-                  activeTab === 'analytics' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                }`}
-              >
-                Analytics
-              </button>
-              <button
-                onClick={() => handleButtonClick('settings')}
-                className={`flex-1 min-w-0 px-3 py-2 rounded-md text-sm transition-colors ${
-                  activeTab === 'settings' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                }`}
-              >
-                Einstellungen
-              </button>
-              <button
-                onClick={() => handleButtonClick('admin')}
-                className={`flex-1 min-w-0 px-3 py-2 rounded-md text-sm transition-colors ${
-                  activeTab === 'admin' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                }`}
-              >
-                Admin
-              </button>
-              <button
-                onClick={() => handleButtonClick('branding')}
-                className="flex-1 min-w-0 px-3 py-2 rounded-md text-sm transition-colors hover:bg-muted"
-              >
-                Branding
-              </button>
-            </nav>
-            
-            <header className="flex items-center justify-between">
-              <div>
-                <h1>DUH AI Gateway</h1>
-                <p className="text-sm text-muted-foreground">Professionelles Intranet-AI-Gateway</p>
-              </div>
-              <div>
-                <a href="/api/v1/auth/ms/login" className="px-3 py-2 rounded-md bg-primary text-primary-foreground text-sm inline-flex items-center gap-2">
-                  <LogIn className="h-4 w-4"/> Microsoft Login
-                </a>
-              </div>
-            </header>
-
-            {activeTab === 'chat' && (
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div className="lg:col-span-1">
-                  <AssistantPicker
-                    selectedAssistant={selectedAssistant}
-                    onSelectAssistant={handleAssistantSelect}
-                  />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {assistants.map((assistant) => (
+          <Card 
+            key={assistant.id} 
+            className="hover:shadow-lg transition-all duration-normal cursor-pointer"
+            onClick={() => handleAssistantClick(assistant)}
+          >
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  {getModelIcon(assistant.model)}
+                  <CardTitle className="text-lg">{assistant.name}</CardTitle>
                 </div>
-                <div className="lg:col-span-3 panel p-4">
-                  <ChatInterface selectedAssistant={selectedAssistant} />
+                {getStatusBadge(assistant.status)}
+              </div>
+              <CardDescription className="text-text-secondary">
+                {assistant.description || 'Keine Beschreibung verfügbar'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-text-muted">Modell:</span>
+                  <span className="text-text-secondary">{assistant.model}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-text-muted">Threads:</span>
+                  <span className="text-text-secondary">{assistant.usage_stats.total_threads}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-text-muted">Aktive Nutzer:</span>
+                  <span className="text-text-secondary">{assistant.usage_stats.active_users}</span>
                 </div>
               </div>
-            )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-            {activeTab === 'analytics' && (
-              <div className="panel p-4">
-                <AnalyticsPanel />
-              </div>
-            )}
-
-            {activeTab === 'settings' && (
-              <div className="panel p-4">
-                <SettingsPanel />
-              </div>
-            )}
-
-            {activeTab === 'admin' && (
-              <div className="panel p-4">
-                <AdminPanel />
-              </div>
-            )}
-          </section>
+      {assistants.length === 0 && (
+        <div className="text-center py-12">
+          <Bot className="h-12 w-12 text-text-muted mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-text-primary mb-2">
+            Keine Assistenten verfügbar
+          </h3>
+          <p className="text-text-secondary">
+            Es sind derzeit keine AI-Assistenten konfiguriert.
+          </p>
         </div>
-      </main>
+      )}
     </div>
-  )
+  );
 }

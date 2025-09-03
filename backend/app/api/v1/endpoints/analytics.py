@@ -17,7 +17,8 @@ from app.schemas.analytics import (
 router = APIRouter()
 
 
-@router.get("/", response_model=AnalyticsResponse)
+@router.get("", response_model=AnalyticsResponse)
+@router.get("/overview", response_model=AnalyticsResponse)
 async def get_analytics(
     start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),

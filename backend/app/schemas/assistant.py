@@ -1,42 +1,42 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel
+from typing import Optional, Dict, Any
 from datetime import datetime
-from uuid import UUID
+from enum import Enum
 
-class AssistantBase(BaseModel):
-    name: str = Field(..., description="Name of the assistant")
-    description: Optional[str] = Field(None, description="Description of the assistant")
-    instructions: str = Field(..., description="Instructions for the assistant")
-    department_id: Optional[UUID] = Field(None, description="Department ID")
 
-class AssistantCreate(AssistantBase):
-    pass
+class AssistantStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    MAINTENANCE = "maintenance"
+
+
+class AssistantCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    instructions: Optional[str] = None
+    provider: str = "openai"
+    system_prompt: str = "Du bist ein hilfreicher KI-Assistent."
+    model: str = "gpt-4o-mini"
+    status: AssistantStatus = AssistantStatus.ACTIVE
+
 
 class AssistantUpdate(BaseModel):
-    name: Optional[str] = Field(None, description="Name of the assistant")
-    description: Optional[str] = Field(None, description="Description of the assistant")
-    instructions: Optional[str] = Field(None, description="Instructions for the assistant")
-    department_id: Optional[UUID] = Field(None, description="Department ID")
+    name: Optional[str] = None
+    description: Optional[str] = None
+    instructions: Optional[str] = None
+    provider: Optional[str] = None
+    system_prompt: Optional[str] = None
+    model: Optional[str] = None
+    status: Optional[AssistantStatus] = None
 
-class AssistantResponse(AssistantBase):
-    id: str = Field(..., description="Assistant ID")
-    openai_id: Optional[str] = Field(None, description="OpenAI Assistant ID")
-    model: str = Field(..., description="AI model used")
-    created_at: datetime = Field(..., description="Creation timestamp")
-    
-    class Config:
-        from_attributes = True
 
-class ChatMessage(BaseModel):
-    content: str = Field(..., description="Message content")
-    role: str = Field(default="user", description="Message role (user/assistant)")
-
-class ChatRequest(BaseModel):
-    message: str = Field(..., description="User message")
-    assistant_id: str = Field(..., description="Assistant ID to chat with")
-
-class ChatResponse(BaseModel):
-    assistant_id: str = Field(..., description="Assistant ID")
-    thread_id: str = Field(..., description="OpenAI thread ID")
-    response: str = Field(..., description="Assistant response")
-    run_id: str = Field(..., description="OpenAI run ID")
+class AssistantResponse(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    instructions: Optional[str] = None
+    model: str
+    status: AssistantStatus
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    usage_stats: Dict[str, Any]

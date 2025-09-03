@@ -1,0 +1,1 @@
+Dies ist eine Testdatei für das Training-Modul. Sie enthält wichtige Informationen über das AI Gateway System.

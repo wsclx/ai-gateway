@@ -1,317 +1,84 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { useState, useEffect, useCallback } from 'react';
 import { 
-  MessageSquare, 
+  BarChart3, 
   TrendingUp, 
-  DollarSign, 
-  Clock, 
   Users, 
-  Bot, 
+  MessageSquare, 
+  DollarSign, 
+  Clock,
   Download,
-  BarChart3,
-  PieChart,
+  RefreshCw,
   Activity,
-  Calendar,
-  FileText,
-  Settings,
-  Loader2
-} from "lucide-react";
-import { apiClient, AnalyticsData } from "@/lib/api-client";
+  Zap,
+  Target,
+  Award
+} from 'lucide-react';
+import { analyticsApi, AnalyticsResponse } from '@/lib/api-client';
 
 export function AnalyticsPanel() {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [isExporting, setIsExporting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Load analytics data on component mount
-  useEffect(() => {
-    loadAnalytics();
-  }, []);
+  const [dateRange, setDateRange] = useState('7d');
 
   const loadAnalytics = useCallback(async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
+      const data = await analyticsApi.getAnalytics();
+      setAnalytics(data);
       setError(null);
-      
-      console.log('Loading analytics...');
-      const response = await apiClient.getAnalytics();
-      console.log('Analytics response:', response);
-      
-      if (response.success && response.data) {
-        setAnalyticsData(response.data);
-        console.log('Analytics data set:', response.data);
-      } else {
-        console.error('Analytics failed:', response.error);
-        // Use fallback data if API fails
-        const fallbackData: AnalyticsData = {
-          overview: {
-            totalMessages: 1250,
-            totalTokens: 45600,
-            totalCost: 12.50,
-            avgLatency: 1250,
-            activeUsers: 23,
-            totalAssistants: 6
-          },
-          usage: {
-            daily: [
-              { date: "2025-08-19", messages: 45, tokens: 1800, cost: 0.50 },
-              { date: "2025-08-20", messages: 52, tokens: 2100, cost: 0.58 },
-              { date: "2025-08-21", messages: 38, tokens: 1500, cost: 0.42 },
-              { date: "2025-08-22", messages: 67, tokens: 2800, cost: 0.78 },
-              { date: "2025-08-23", messages: 89, tokens: 3600, cost: 1.00 },
-              { date: "2025-08-24", messages: 76, tokens: 3100, cost: 0.86 },
-              { date: "2025-08-25", messages: 34, tokens: 1400, cost: 0.39 }
-            ],
-            byDepartment: [
-              { name: "IT", messages: 450, percentage: 36 },
-              { name: "HR", messages: 320, percentage: 26 },
-              { name: "Marketing", messages: 280, percentage: 22 },
-              { name: "Sales", messages: 200, percentage: 16 },
-              { name: "Finance", messages: 150, percentage: 12 },
-              { name: "General", messages: 100, percentage: 8 }
-            ],
-            byAssistant: [
-              { name: "DUH General Assistant", messages: 500, percentage: 40 },
-              { name: "DUH HR Assistant", messages: 300, percentage: 24 },
-              { name: "DUH IT Support", messages: 250, percentage: 20 },
-              { name: "DUH Marketing Assistant", messages: 200, percentage: 16 },
-              { name: "DUH Sales Assistant", messages: 150, percentage: 12 },
-              { name: "DUH Finance Assistant", messages: 100, percentage: 8 }
-            ]
-          },
-          performance: {
-            responseTime: {
-              avg: 1250,
-              p95: 2100,
-              p99: 3500
-            },
-            accuracy: {
-              overall: 94.2,
-              byAssistant: [
-                { name: "General", accuracy: 96.1 },
-                { name: "HR", accuracy: 93.8 },
-                { name: "IT", accuracy: 95.2 },
-                { name: "Marketing", accuracy: 92.5 }
-              ]
-            },
-            userSatisfaction: {
-              overall: 4.6,
-              totalRatings: 156,
-              distribution: [
-                { rating: 5, count: 89, percentage: 57 },
-                { rating: 4, count: 45, percentage: 29 },
-                { rating: 3, count: 15, percentage: 10 },
-                { rating: 2, count: 4, percentage: 3 },
-                { rating: 1, count: 3, percentage: 2 }
-              ]
-            }
-          },
-          costs: {
-            monthly: [
-              { month: "Feb", cost: 8.50 },
-              { month: "Mar", cost: 9.20 },
-              { month: "Apr", cost: 10.10 },
-              { month: "May", cost: 11.30 },
-              { month: "Jun", cost: 12.80 },
-              { month: "Jul", cost: 13.20 },
-              { month: "Aug", cost: 12.50 }
-            ],
-            byModel: [
-              { model: "GPT-4o-mini", cost: 8.75, percentage: 70 },
-              { model: "GPT-3.5", cost: 2.50, percentage: 20 },
-              { model: "Claude", cost: 1.25, percentage: 10 }
-            ]
-          }
-        };
-        
-        setAnalyticsData(fallbackData);
-        setError('Backend nicht verfügbar - Verwende Demo-Daten');
-      }
     } catch (err) {
-      console.error('Analytics loading error:', err);
-      // Use fallback data on error
-      const fallbackData: AnalyticsData = {
-        overview: {
-          totalMessages: 1250,
-          totalTokens: 45600,
-          totalCost: 12.50,
-          avgLatency: 1250,
-          activeUsers: 23,
-          totalAssistants: 6
-        },
-        usage: {
-          daily: [
-            { date: "2025-08-19", messages: 45, tokens: 1800, cost: 0.50 },
-            { date: "2025-08-20", messages: 52, tokens: 2100, cost: 0.58 },
-            { date: "2025-08-21", messages: 38, tokens: 1500, cost: 0.42 },
-            { date: "2025-08-22", messages: 67, tokens: 2800, cost: 0.78 },
-            { date: "2025-08-23", messages: 89, tokens: 3600, cost: 1.00 },
-            { date: "2025-08-24", messages: 76, tokens: 3100, cost: 0.86 },
-            { date: "2025-08-25", messages: 34, tokens: 1400, cost: 0.39 }
-          ],
-          byDepartment: [
-            { name: "IT", messages: 450, percentage: 36 },
-            { name: "HR", messages: 320, percentage: 26 },
-            { name: "Marketing", messages: 280, percentage: 22 },
-            { name: "Sales", messages: 200, percentage: 16 },
-            { name: "Finance", messages: 150, percentage: 12 },
-            { name: "General", messages: 100, percentage: 8 }
-          ],
-          byAssistant: [
-            { name: "DUH General Assistant", messages: 500, percentage: 40 },
-            { name: "DUH HR Assistant", messages: 300, percentage: 24 },
-            { name: "DUH IT Support", messages: 250, percentage: 20 },
-            { name: "DUH Marketing Assistant", messages: 200, percentage: 16 },
-            { name: "DUH Sales Assistant", messages: 150, percentage: 12 },
-            { name: "DUH Finance Assistant", messages: 100, percentage: 8 }
-          ]
-        },
-        performance: {
-          responseTime: {
-            avg: 1250,
-            p95: 2100,
-            p99: 3500
-          },
-          accuracy: {
-            overall: 94.2,
-            byAssistant: [
-              { name: "General", accuracy: 96.1 },
-              { name: "HR", accuracy: 93.8 },
-              { name: "IT", accuracy: 95.2 },
-              { name: "Marketing", accuracy: 92.5 }
-            ]
-          },
-          userSatisfaction: {
-            overall: 4.6,
-            totalRatings: 156,
-            distribution: [
-              { rating: 5, count: 89, percentage: 57 },
-              { rating: 4, count: 45, percentage: 29 },
-              { rating: 3, count: 15, percentage: 10 },
-              { rating: 2, count: 4, percentage: 3 },
-              { rating: 1, count: 3, percentage: 2 }
-            ]
-          }
-        },
-        costs: {
-          monthly: [
-            { month: "Feb", cost: 8.50 },
-            { month: "Mar", cost: 9.20 },
-            { month: "Apr", cost: 10.10 },
-            { month: "May", cost: 11.30 },
-            { month: "Jun", cost: 12.80 },
-            { month: "Jul", cost: 13.20 },
-            { month: "Aug", cost: 12.50 }
-          ],
-          byModel: [
-            { model: "GPT-4o-mini", cost: 8.75, percentage: 70 },
-            { model: "GPT-3.5", cost: 2.50, percentage: 20 },
-            { model: "Claude", cost: 1.25, percentage: 10 }
-          ]
-        }
-      };
-      
-      setAnalyticsData(fallbackData);
-      setError('Fehler beim Laden - Verwende Demo-Daten');
+      console.error('Failed to load analytics:', err);
+      setError('Fehler beim Laden der Analytics-Daten');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, []);
 
-  const handleExport = useCallback(async (format: string) => {
-    setIsExporting(true);
+  useEffect(() => {
+    loadAnalytics();
+  }, [loadAnalytics]);
+
+  const handleExport = async (format: 'csv' | 'json') => {
     try {
-      const response = await apiClient.exportAnalytics(
-        format as 'csv' | 'json'
-      );
-      
-      if (response.success && response.data) {
-        if (format === 'csv') {
-          // Create and download CSV file
-          const blob = new Blob([response.data], { type: 'text/csv' });
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `analytics-${new Date().toISOString().split('T')[0]}.csv`;
-          a.click();
-          window.URL.revokeObjectURL(url);
-        } else {
-          // Download JSON file
-          const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `analytics-${new Date().toISOString().split('T')[0]}.json`;
-          a.click();
-          window.URL.revokeObjectURL(url);
-        }
-        
-        console.log(`${format.toUpperCase()} Export erfolgreich!`);
-      } else {
-        throw new Error(response.error || 'Export failed');
-      }
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert(`Export fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
-    } finally {
-      setIsExporting(false);
+      const data = await analyticsApi.exportAnalytics(format);
+      // Create download link
+      const blob = new Blob([format === 'json' ? JSON.stringify(data.data, null, 2) : data.data], {
+        type: format === 'json' ? 'application/json' : 'text/csv'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `analytics-${new Date().toISOString().split('T')[0]}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export failed:', err);
+      setError('Export fehlgeschlagen');
     }
+  };
+
+  const updateDashboardStats = useCallback(() => {
+    // This would update dashboard stats in real-time
+    console.log('Updating dashboard stats...');
   }, []);
 
-  const handleTabChange = useCallback((value: string) => {
-    console.log('Analytics tab changed to:', value);
-    setActiveTab(value);
-  }, []);
-
-  const handleQuickAction = useCallback((action: string) => {
-    console.log('Quick action clicked:', action);
-    switch (action) {
-      case 'analytics':
-        setActiveTab('usage');
-        break;
-      case 'export':
-        handleExport('csv');
-        break;
-      case 'settings':
-        setActiveTab('costs');
-        break;
-    }
-  }, [handleExport]);
-
-  const handleButtonClick = useCallback((action: string, ...args: any[]) => {
-    console.log('Button clicked:', action, args);
-    switch (action) {
-      case 'export-csv':
-        handleExport('csv');
-        break;
-      case 'export-json':
-        handleExport('json');
-        break;
-      case 'tab-change':
-        handleTabChange(args[0]);
-        break;
-      case 'quick-action':
-        handleQuickAction(args[0]);
-        break;
-      default:
-        console.log('Unknown action:', action);
-    }
-  }, [handleExport, handleTabChange, handleQuickAction]);
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2 text-muted-foreground">Lade Analytics...</span>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-text-primary mb-2">Analytics</h1>
+            <p className="text-text-muted">Detaillierte Einblicke in die Nutzung</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary"></div>
         </div>
       </div>
     );
@@ -319,290 +86,211 @@ export function AnalyticsPanel() {
 
   if (error) {
     return (
-      <div className="space-y-4">
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <div className="text-amber-800 font-medium">Hinweis</div>
-          <div className="text-sm text-amber-700 mt-1">{error}</div>
-          <Button 
-            onClick={loadAnalytics} 
-            variant="outline" 
-            size="sm" 
-            className="mt-2"
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-text-primary mb-2">Analytics</h1>
+            <p className="text-text-muted">Detaillierte Einblicke in die Nutzung</p>
+          </div>
+        </div>
+        
+        <div className="bg-accent-error/10 border border-accent-error/20 rounded-xl p-4">
+          <p className="text-accent-error text-sm">{error}</p>
+          <button 
+            onClick={loadAnalytics}
+            className="mt-2 text-accent-error hover:text-accent-error/80 text-sm underline"
           >
             Erneut versuchen
-          </Button>
+          </button>
         </div>
       </div>
     );
   }
 
-  if (!analyticsData) {
+  if (!analytics) {
     return (
-      <div className="space-y-4">
-        <div className="text-center text-muted-foreground p-8">
-          Keine Analytics-Daten verfügbar
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-text-primary mb-2">Analytics</h1>
+            <p className="text-text-muted">Detaillierte Einblicke in die Nutzung</p>
+          </div>
+        </div>
+        
+        <div className="text-center py-12">
+          <p className="text-text-muted">Keine Analytics-Daten verfügbar</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Quick Stats */}
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Analytics</h2>
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleButtonClick('export-csv')}
-            disabled={isExporting}
-            type="button"
-            className="cursor-pointer"
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary mb-2">Analytics</h1>
+          <p className="text-text-muted">Detaillierte Einblicke in die Nutzung</p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            className="bg-bg-tertiary border border-border-default rounded-lg px-3 py-2 text-text-primary"
           >
-            <Download className="h-4 w-4 mr-2" />
-            CSV
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleButtonClick('export-json')}
-            disabled={isExporting}
-            type="button"
-            className="cursor-pointer"
+            <option value="7d">Letzte 7 Tage</option>
+            <option value="30d">Letzte 30 Tage</option>
+            <option value="90d">Letzte 90 Tage</option>
+          </select>
+          
+          <button
+            onClick={loadAnalytics}
+            className="p-2 bg-bg-tertiary border border-border-default rounded-lg hover:bg-bg-elevated transition-colors"
           >
-            <FileText className="h-4 w-4 mr-2" />
-            JSON
-          </Button>
+            <RefreshCw className="w-4 h-4 text-text-secondary" />
+          </button>
+          
+          <button
+            onClick={() => handleExport('csv')}
+            className="px-3 py-2 bg-accent-primary text-white rounded-lg hover:bg-accent-primary/90 transition-colors flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
         </div>
       </div>
 
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex items-center justify-between p-3 bg-accent rounded-md">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Nachrichten</span>
+      {/* Overview Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-bg-tertiary rounded-xl p-6 border border-border-default">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-text-muted text-sm">Nachrichten</p>
+              <p className="text-2xl font-bold text-text-primary">{analytics.overview.totalMessages}</p>
+              <p className="text-sm text-text-secondary mt-1">
+                {analytics.overview.totalTokens} Tokens
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-accent-primary/10 rounded-lg flex items-center justify-center">
+              <MessageSquare className="w-6 h-6 text-accent-primary" />
+            </div>
           </div>
-          <span className="text-lg font-bold">
-            {analyticsData.overview.totalMessages.toLocaleString('de-DE')}
-          </span>
         </div>
-        <div className="flex items-center justify-between p-3 bg-accent rounded-md">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Tokens</span>
+
+        <div className="bg-bg-tertiary rounded-xl p-6 border border-border-default">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-text-muted text-sm">Aktive Benutzer</p>
+              <p className="text-2xl font-bold text-text-primary">{analytics.overview.activeUsers}</p>
+              <p className="text-sm text-text-secondary mt-1">
+                {analytics.overview.totalAssistants} Assistenten
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-accent-success/10 rounded-lg flex items-center justify-center">
+              <Users className="w-6 h-6 text-accent-success" />
+            </div>
           </div>
-          <span className="text-lg font-bold">
-            {analyticsData.overview.totalTokens.toLocaleString('de-DE')}
-          </span>
         </div>
-        <div className="flex items-center justify-between p-3 bg-accent rounded-md">
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Kosten</span>
+
+        <div className="bg-bg-tertiary rounded-xl p-6 border border-border-default">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-text-muted text-sm">Kosten</p>
+              <p className="text-2xl font-bold text-text-primary">€{analytics.overview.totalCost}</p>
+              <p className="text-sm text-text-secondary mt-1">
+                {analytics.overview.avgLatency}ms Latenz
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-accent-warning/10 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-accent-warning" />
+            </div>
           </div>
-          <span className="text-lg font-bold">
-            €{analyticsData.overview.totalCost.toFixed(2).replace('.', ',')}
-          </span>
         </div>
-        <div className="flex items-center justify-between p-3 bg-accent rounded-md">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Latenz</span>
+
+        <div className="bg-bg-tertiary rounded-xl p-6 border border-border-default">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-text-muted text-sm">Performance</p>
+              <p className="text-2xl font-bold text-text-primary">{analytics.performance.accuracy.overall}%</p>
+              <p className="text-sm text-text-secondary mt-1">
+                Genauigkeit
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-accent-purple/10 rounded-lg flex items-center justify-center">
+              <Target className="w-6 h-6 text-accent-purple" />
+            </div>
           </div>
-          <span className="text-lg font-bold">{analyticsData.overview.avgLatency}ms</span>
         </div>
       </div>
 
-      {/* Detailed Analytics Tabs */}
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger 
-            value="overview" 
-            onClick={() => handleButtonClick('tab-change', 'overview')}
-            className="cursor-pointer"
-          >
-            Übersicht
-          </TabsTrigger>
-          <TabsTrigger 
-            value="usage" 
-            onClick={() => handleButtonClick('tab-change', 'usage')}
-            className="cursor-pointer"
-          >
-            Nutzung
-          </TabsTrigger>
-          <TabsTrigger 
-            value="performance" 
-            onClick={() => handleButtonClick('tab-change', 'performance')}
-            className="cursor-pointer"
-          >
-            Leistung
-          </TabsTrigger>
-          <TabsTrigger 
-            value="costs" 
-            onClick={() => handleButtonClick('tab-change', 'costs')}
-            className="cursor-pointer"
-          >
-            Kosten
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>System-Übersicht</CardTitle>
-              <CardDescription>Aktuelle System-Metriken</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
-                    {analyticsData.overview.activeUsers}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Aktive Benutzer</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
-                    {analyticsData.overview.totalAssistants}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Assistenten</div>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <h4 className="font-medium">Aktuelle Aktivitäten</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-muted-foreground">14:32</span>
-                    <span className="text-foreground">HR Assistant verwendet</span>
-                    <span className="text-muted-foreground">• Max M.</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-muted-foreground">14:28</span>
-                    <span className="text-foreground">IT Support verwendet</span>
-                    <span className="text-muted-foreground">• Anna K.</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-muted-foreground">14:15</span>
-                    <span className="text-foreground">Feedback gesendet</span>
-                    <span className="text-muted-foreground">• Tom B.</span>
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Daily Usage Chart */}
+        <div className="bg-bg-tertiary rounded-xl border border-border-default p-6">
+          <h3 className="text-lg font-semibold text-text-primary mb-4">Tägliche Nutzung</h3>
+          <div className="space-y-3">
+            {analytics.usage.daily.slice(-7).map((day, index) => (
+              <div key={day.date} className="flex items-center justify-between">
+                <span className="text-sm text-text-secondary">{day.date}</span>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-text-primary">{day.messages} Nachrichten</span>
+                  <div className="w-20 h-2 bg-bg-elevated rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-accent-primary rounded-full"
+                      style={{ width: `${(day.messages / Math.max(...analytics.usage.daily.map(d => d.messages))) * 100}%` }}
+                    />
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            ))}
+          </div>
+        </div>
 
-        <TabsContent value="usage" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Nutzung nach Abteilung</CardTitle>
-              <CardDescription>Verteilung der Nachrichten nach Abteilungen</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {analyticsData.usage.byDepartment.map((dept) => (
-                  <div key={dept.name} className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>{dept.name}</span>
-                      <span>{dept.messages} Nachrichten</span>
-                    </div>
-                    <Progress value={dept.percentage} className="h-2" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="performance" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Antwortzeiten</CardTitle>
-              <CardDescription>Performance-Metriken</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-primary">
-                    {analyticsData.performance.responseTime.avg}ms
-                  </div>
-                  <div className="text-sm text-muted-foreground">Durchschnitt</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-primary">
-                    {analyticsData.performance.responseTime.p95}ms
-                  </div>
-                  <div className="text-sm text-muted-foreground">P95</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-primary">
-                    {analyticsData.performance.responseTime.p99}ms
-                  </div>
-                  <div className="text-sm text-muted-foreground">P99</div>
+        {/* Department Usage */}
+        <div className="bg-bg-tertiary rounded-xl border border-border-default p-6">
+          <h3 className="text-lg font-semibold text-text-primary mb-4">Nutzung nach Abteilung</h3>
+          <div className="space-y-3">
+            {analytics.usage.byDepartment.map((dept, index) => (
+              <div key={dept.name} className="flex items-center justify-between">
+                <span className="text-sm text-text-secondary">{dept.name}</span>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-text-primary">{dept.messages} Nachrichten</span>
+                  <span className="text-sm text-text-muted">{dept.percentage}%</span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            ))}
+          </div>
+        </div>
+      </div>
 
-        <TabsContent value="costs" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Kosten nach Modell</CardTitle>
-              <CardDescription>Verteilung der Kosten nach AI-Modellen</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {analyticsData.costs.byModel.map((model: any) => (
-                  <div key={model.model} className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>{model.model}</span>
-                      <span>€{model.cost.toFixed(2).replace('.', ',')}</span>
-                    </div>
-                    <Progress value={model.percentage} className="h-2" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Quick Actions */}
-      <div className="pt-4 border-t">
-        <h3 className="text-sm font-medium mb-3">Schnellaktionen</h3>
-        <div className="space-y-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full justify-start cursor-pointer"
-            onClick={() => handleButtonClick('quick-action', 'analytics')}
-            type="button"
-          >
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Detaillierte Analytics
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full justify-start cursor-pointer"
-            onClick={() => handleButtonClick('quick-action', 'export')}
-            type="button"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Feedback exportieren
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full justify-start cursor-pointer"
-            onClick={() => handleButtonClick('quick-action', 'settings')}
-            type="button"
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Einstellungen
-          </Button>
+      {/* Performance Metrics */}
+      <div className="bg-bg-tertiary rounded-xl border border-border-default p-6">
+        <h3 className="text-lg font-semibold text-text-primary mb-4">Performance Metriken</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-accent-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Activity className="w-8 h-8 text-accent-primary" />
+            </div>
+            <p className="text-sm text-text-muted">Durchschnittliche Latenz</p>
+            <p className="text-2xl font-bold text-text-primary">{analytics.performance.responseTime.avg}ms</p>
+          </div>
+          
+          <div className="text-center">
+            <div className="w-16 h-16 bg-accent-success/10 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Award className="w-8 h-8 text-accent-success" />
+            </div>
+            <p className="text-sm text-text-muted">Benutzerzufriedenheit</p>
+            <p className="text-2xl font-bold text-text-primary">{analytics.performance.userSatisfaction.overall}/5</p>
+          </div>
+          
+          <div className="text-center">
+            <div className="w-16 h-16 bg-accent-warning/10 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Zap className="w-8 h-8 text-accent-warning" />
+            </div>
+            <p className="text-sm text-text-muted">P95 Latenz</p>
+            <p className="text-2xl font-bold text-text-primary">{analytics.performance.responseTime.p95}ms</p>
+          </div>
         </div>
       </div>
     </div>
