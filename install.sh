@@ -17,7 +17,7 @@ APP_NAME="AI Gateway"
 APP_VERSION="1.0.0"
 FRONTEND_PORT=${FRONTEND_PORT:-5556}
 BACKEND_PORT=${BACKEND_PORT:-5555}
-DB_PORT=${DB_PORT:-5433}
+DB_PORT=${DB_PORT:-5432}
 MIN_RAM=4000
 REQUIRED_PORTS=($FRONTEND_PORT $BACKEND_PORT $DB_PORT)
 
@@ -170,13 +170,13 @@ init_database() {
     echo -e "${YELLOW}🗄️  Initializing database...${NC}"
     
     # Start database container
-    docker-compose up -d db
+    docker compose up -d db
     
     # Wait for database to be ready
     echo "⏳ Waiting for database to start..."
     timeout=60
     while [ $timeout -gt 0 ]; do
-        if docker-compose exec -T db pg_isready -U aigateway >/dev/null 2>&1; then
+        if docker compose exec -T db pg_isready -U aigateway >/dev/null 2>&1; then
             echo "✅ Database ready"
             break
         fi
@@ -195,8 +195,8 @@ deploy_application() {
     echo -e "${YELLOW}🚀 Deploying AI Gateway...${NC}"
     
     # Build and start all services
-    docker-compose build --no-cache
-    docker-compose up -d
+    docker compose build --no-cache
+    docker compose up -d
     
     # Wait for services to be ready
     echo "⏳ Waiting for services to start..."
@@ -213,7 +213,7 @@ deploy_application() {
     
     if [ $timeout -eq 0 ]; then
         echo -e "${RED}❌ Services failed to start${NC}"
-        docker-compose logs
+        docker compose logs
         exit 1
     fi
 }
@@ -268,15 +268,15 @@ post_install() {
     echo "   4. Start chatting with AI assistants!"
     
     echo -e "${BLUE}🛠️  Management Commands:${NC}"
-    echo "   Start: docker-compose up -d"
-    echo "   Stop: docker-compose down"
-    echo "   Logs: docker-compose logs -f"
-    echo "   Restart: docker-compose restart"
+    echo "   Start: docker compose up -d"
+    echo "   Stop: docker compose down"
+    echo "   Logs: docker compose logs -f"
+    echo "   Restart: docker compose restart"
     
     echo -e "${BLUE}📖 Documentation:${NC}"
     echo "   README.md - Quick start guide"
     echo "   docs/ - Complete documentation"
-    echo "   ./troubleshoot.sh - Troubleshooting script"
+    echo "   README.md - Quick start guide"
     
     echo -e "${YELLOW}⚠️  Security Note:${NC}"
     echo "   Change default passwords after first login!"

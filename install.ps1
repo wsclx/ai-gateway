@@ -71,7 +71,7 @@ function Test-Requirements {
     
     # Check Docker Compose
     try {
-        $ComposeVersion = docker-compose --version 2>$null
+        $ComposeVersion = docker compose version 2>$null
         if ($ComposeVersion) {
             Write-Host "✅ Docker Compose: $ComposeVersion" -ForegroundColor $Green
         } else {
@@ -79,17 +79,9 @@ function Test-Requirements {
         }
     } catch {
         Write-Host "❌ Docker Compose not found" -ForegroundColor $Red
-        Write-Host "📦 Installing Docker Compose..." -ForegroundColor $Yellow
-        
-        # Download Docker Compose
-        $ComposeUrl = "https://github.com/docker/compose/releases/latest/download/docker-compose-windows-x86_64.exe"
-        $ComposePath = "$env:ProgramFiles\Docker\Docker\resources\bin\docker-compose.exe"
-        
-        if (!(Test-Path $ComposePath)) {
-            Invoke-WebRequest -Uri $ComposeUrl -OutFile $ComposePath
-        }
-        
-        Write-Host "✅ Docker Compose installed" -ForegroundColor $Green
+        Write-Host "📦 Docker Compose is included with Docker Desktop" -ForegroundColor $Yellow
+        Write-Host "   Please ensure Docker Desktop is properly installed and running." -ForegroundColor $Yellow
+        exit 1
     }
     
     # Check available RAM
@@ -181,14 +173,14 @@ function Initialize-Database {
     Write-Host "🗄️  Initializing database..." -ForegroundColor $Yellow
     
     # Start database container
-    docker-compose up -d db
+    docker compose up -d db
     
     # Wait for database to be ready
     Write-Host "⏳ Waiting for database to start..." -ForegroundColor $Yellow
     $timeout = 60
     while ($timeout -gt 0) {
         try {
-            $result = docker-compose exec -T db pg_isready -U aigateway 2>$null
+            $result = docker compose exec -T db pg_isready -U aigateway 2>$null
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "✅ Database ready" -ForegroundColor $Green
                 break
@@ -211,8 +203,8 @@ function Deploy-Application {
     Write-Host "🚀 Deploying AI Gateway..." -ForegroundColor $Yellow
     
     # Build and start all services
-    docker-compose build --no-cache
-    docker-compose up -d
+    docker compose build --no-cache
+    docker compose up -d
     
     # Wait for services to be ready
     Write-Host "⏳ Waiting for services to start..." -ForegroundColor $Yellow
@@ -235,7 +227,7 @@ function Deploy-Application {
     
     if ($timeout -eq 0) {
         Write-Host "❌ Services failed to start" -ForegroundColor $Red
-        docker-compose logs
+        docker compose logs
         exit 1
     }
 }
@@ -308,15 +300,15 @@ function Show-PostInstall {
     Write-Host "   4. Start chatting with AI assistants!" -ForegroundColor $Blue
     
     Write-Host "🛠️  Management Commands:" -ForegroundColor $Blue
-    Write-Host "   Start: docker-compose up -d" -ForegroundColor $Blue
-    Write-Host "   Stop: docker-compose down" -ForegroundColor $Blue
-    Write-Host "   Logs: docker-compose logs -f" -ForegroundColor $Blue
-    Write-Host "   Restart: docker-compose restart" -ForegroundColor $Blue
+    Write-Host "   Start: docker compose up -d" -ForegroundColor $Blue
+    Write-Host "   Stop: docker compose down" -ForegroundColor $Blue
+    Write-Host "   Logs: docker compose logs -f" -ForegroundColor $Blue
+    Write-Host "   Restart: docker compose restart" -ForegroundColor $Blue
     
     Write-Host "📖 Documentation:" -ForegroundColor $Blue
     Write-Host "   README.md - Quick start guide" -ForegroundColor $Blue
     Write-Host "   docs/ - Complete documentation" -ForegroundColor $Blue
-    Write-Host "   .\troubleshoot.ps1 - Troubleshooting script" -ForegroundColor $Blue
+    Write-Host "   README.md - Quick start guide" -ForegroundColor $Blue
     
     Write-Host "⚠️  Security Note:" -ForegroundColor $Yellow
     Write-Host "   Change default passwords after first login!" -ForegroundColor $Yellow
