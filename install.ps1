@@ -1,4 +1,4 @@
-# AI Gateway Complete Installer v1.0
+# AI Gateway Complete Installer v1.0.0
 # Windows PowerShell installer
 
 param(
@@ -27,7 +27,7 @@ $RequiredPorts = @($FrontendPort, $BackendPort, $DbPort)
 # ASCII Art
 function Write-Banner {
     Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor $Blue
-    Write-Host "║                    🚀 AI GATEWAY v1.0                        ║" -ForegroundColor $Blue
+    Write-Host "║                    🚀 AI GATEWAY v1.0.0                      ║" -ForegroundColor $Blue
     Write-Host "║              Enterprise AI Platform Installer                ║" -ForegroundColor $Blue
     Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor $Blue
     Write-Host ""

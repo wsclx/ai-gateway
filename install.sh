@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AI Gateway Complete Installer v1.0
+# AI Gateway Complete Installer v1.0.0
 # Universal installer for Linux and macOS
 
 set -e
@@ -25,7 +25,7 @@ REQUIRED_PORTS=($FRONTEND_PORT $BACKEND_PORT $DB_PORT)
 print_banner() {
     echo -e "${BLUE}"
     echo "╔══════════════════════════════════════════════════════════════╗"
-    echo "║                    🚀 AI GATEWAY v1.0                        ║"
+    echo "║                    🚀 AI GATEWAY v1.0.0                      ║"
     echo "║              Enterprise AI Platform Installer                ║"
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
