@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Backend URL - use Docker service name when server-side, localhost when client-side
-const BACKEND_URL = process.env.BACKEND_URL || 'http://backend:8000';
+// Backend URL - use localhost for browser requests, Docker service name for server-side
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5555';
 
 export async function GET(
   request: NextRequest,
@@ -113,6 +113,9 @@ export async function DELETE(
     
     const response = await fetch(url, {
       method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
     
     const data = await response.json();

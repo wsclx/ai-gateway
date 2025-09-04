@@ -45,7 +45,7 @@ export function AnalyticsPanel() {
     try {
       const data = await analyticsApi.exportAnalytics(format);
       // Create download link
-      const blob = new Blob([format === 'json' ? JSON.stringify(data.data, null, 2) : data.data], {
+      const blob = new Blob([format === 'json' ? JSON.stringify(data, null, 2) : data], {
         type: format === 'json' ? 'application/json' : 'text/csv'
       });
       const url = URL.createObjectURL(blob);

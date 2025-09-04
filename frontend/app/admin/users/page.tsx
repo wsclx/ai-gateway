@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { TableRowSkeleton } from '@/components/ui/skeleton';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
-// Use native crypto for ids to avoid bundler issues
+import { adminApi } from '@/lib/api-client';
 
 interface User {
   id: string;
@@ -30,33 +30,21 @@ export default function UsersPage() {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        // Call real API
-        const response = await fetch('/api/v1/admin/users', {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const apiUsers = await response.json();
-          
-          // Transform API response to match our User interface
-          const transformedUsers = apiUsers.map((user: any) => ({
-            id: user.id,
-            email: user.email,
-            name: user.display_name || user.email,
-            role: user.role || 'user',
-            status: user.status || 'active',
-            last_login: user.last_login,
-            created_at: user.created_at
-          }));
-          
-          setUsers(transformedUsers);
-        } else {
-          throw new Error(`API Error: ${response.status}`);
+        const apiUsers = await adminApi.getUsers?.();
+        if (!apiUsers) {
+          throw new Error('API Error: 404');
         }
+        const transformedUsers = (apiUsers as any[]).map((user: any) => ({
+          id: user.id,
+          email: user.email,
+          name: user.display_name || user.email,
+          role: user.role || 'user',
+          status: user.status || 'active',
+          last_login: user.last_login,
+          created_at: user.created_at
+        }));
+        setUsers(transformedUsers);
+        setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Fehler beim Laden der Benutzer');
       } finally {
@@ -127,6 +115,7 @@ export default function UsersPage() {
           <button
             onClick={() => setShowCreate(true)}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+            data-testid="open-create-user"
           >
             Neuen Benutzer hinzufügen
           </button>
@@ -232,20 +221,23 @@ export default function UsersPage() {
               <div className="flex justify-end gap-2 mt-6">
                 <button onClick={()=>setShowCreate(false)} className="px-4 py-2 bg-bg-secondary text-text rounded-lg border border-border hover:bg-bg-muted transition-all duration-fast">Abbrechen</button>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (!form.name.trim() || !form.email.trim()) return;
-                    const newUser: User = {
-                      id: (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)),
-                      email: form.email.trim(),
-                      name: form.name.trim(),
-                      role: form.role,
-                      status: 'active',
-                      created_at: new Date().toISOString()
-                    };
-                    setUsers(prev => [newUser, ...prev]);
-                    setShowCreate(false);
-                    setForm({ email:'', name:'', role:'user' });
+                    try {
+                      const created = await adminApi.createUser({ email: form.email.trim(), display_name: form.name.trim(), role: form.role, department: 'IT' });
+                      setUsers(prev => [{
+                        id: created.id || Math.random().toString(36).slice(2),
+                        email: created.email || form.email.trim(),
+                        name: created.display_name || form.name.trim(),
+                        role: created.role || form.role,
+                        status: created.status || 'active',
+                        created_at: created.created_at || new Date().toISOString()
+                      }, ...prev]);
+                      setShowCreate(false);
+                      setForm({ email:'', name:'', role:'user' });
+                    } catch (e) {}
                   }}
+                  data-testid="save-user"
                   className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-all duration-fast"
                 >
                   Speichern

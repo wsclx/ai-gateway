@@ -28,7 +28,7 @@ interface Ticket {
   title: string;
   description: string;
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: 'low' | 'medium' | 'high' | 'critical';
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -159,7 +159,7 @@ export function TicketsPanel() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'bg-accent-error text-white';
+      case 'critical': return 'bg-accent-error text-white';
       case 'high': return 'bg-accent-warning text-white';
       case 'medium': return 'bg-accent-primary text-white';
       case 'low': return 'bg-accent-success text-white';
@@ -307,7 +307,7 @@ export function TicketsPanel() {
                 className="w-full p-2 border border-border-default rounded-lg bg-bg-elevated text-text-primary"
               >
                 <option value="all">Alle Prioritäten</option>
-                <option value="urgent">Dringend</option>
+                <option value="critical">Kritisch</option>
                 <option value="high">Hoch</option>
                 <option value="medium">Mittel</option>
                 <option value="low">Niedrig</option>
@@ -343,7 +343,7 @@ export function TicketsPanel() {
                            ticket.status === 'resolved' ? 'Gelöst' : 'Geschlossen'}
                         </Badge>
                         <Badge className={getPriorityColor(ticket.priority)}>
-                          {ticket.priority === 'urgent' ? 'Dringend' :
+                          {ticket.priority === 'critical' ? 'Kritisch' :
                            ticket.priority === 'high' ? 'Hoch' :
                            ticket.priority === 'medium' ? 'Mittel' : 'Niedrig'}
                         </Badge>
@@ -409,7 +409,7 @@ export function TicketsPanel() {
                     <option value="low">Niedrig</option>
                     <option value="medium">Mittel</option>
                     <option value="high">Hoch</option>
-                    <option value="urgent">Dringend</option>
+                    <option value="critical">Kritisch</option>
                   </select>
                 </div>
                 <div>

@@ -11,6 +11,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assistantId, setAssistantId] = useState<string>('');
+  const [threadId, setThreadId] = useState<string>('');
   const params = useSearchParams();
   const [mounted, setMounted] = useState(false);
 
@@ -48,11 +49,19 @@ export default function ChatPage() {
     setError(null);
 
     try {
-      const response = await chatApi.sendMessage(input, assistantId);
+      // Ensure a thread exists
+      let currentThreadId = threadId;
+      if (!currentThreadId) {
+        const created = await chatApi.createThread(assistantId);
+        currentThreadId = created.data.id;
+        setThreadId(currentThreadId);
+      }
+
+      const response = await chatApi.sendMessage(currentThreadId, input, assistantId);
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        content: response.response,
+        content: response.data.content,
         role: 'assistant',
         timestamp: new Date().toISOString(),
         assistant_id: assistantId
