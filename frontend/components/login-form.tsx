@@ -53,12 +53,10 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
     const password = formData.get('password') as string;
     
     try {
-      const response = await fetch('/api/v1/auth/token', {
+      const response = await fetch('/api/proxy/auth/token', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: username, password })
       });
       
       if (!response.ok) {

@@ -23,6 +23,7 @@ export default function ChatInterface({ assistantId, assistantName }: ChatInterf
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [threadId, setThreadId] = useState<string>('');
 
   useEffect(() => {
     setMounted(true);
@@ -52,11 +53,19 @@ export default function ChatInterface({ assistantId, assistantName }: ChatInterf
     setError(null);
 
     try {
-      const response = await chatApi.sendMessage(input, assistantId);
+      // Ensure a thread exists
+      let currentThreadId = threadId;
+      if (!currentThreadId) {
+        const created = await chatApi.createThread(assistantId);
+        currentThreadId = created.data.id;
+        setThreadId(currentThreadId);
+      }
+
+      const response = await chatApi.sendMessage(currentThreadId, input, assistantId);
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: response.response,
+        content: response.data.content,
         role: 'assistant',
         timestamp: new Date().toISOString()
       };

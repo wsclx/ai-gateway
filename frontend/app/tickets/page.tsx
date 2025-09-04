@@ -73,7 +73,7 @@ export default function TicketsPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'text-accent-error';
+      case 'critical': return 'text-accent-error';
       case 'high': return 'text-accent-warning';
       case 'medium': return 'text-accent-primary';
       case 'low': return 'text-accent-success';
@@ -83,7 +83,7 @@ export default function TicketsPage() {
 
   const getPriorityBg = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'bg-accent-error/10';
+      case 'critical': return 'bg-accent-error/10';
       case 'high': return 'bg-accent-warning/10';
       case 'medium': return 'bg-accent-primary/10';
       case 'low': return 'bg-accent-success/10';
@@ -223,7 +223,7 @@ export default function TicketsPage() {
                     {ticket.status === 'closed' && 'Geschlossen'}
                   </span>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityBg(ticket.priority)} ${getPriorityColor(ticket.priority)}`}>
-                    {ticket.priority === 'urgent' && 'Dringend'}
+                    {ticket.priority === 'critical' && 'Kritisch'}
                     {ticket.priority === 'high' && 'Hoch'}
                     {ticket.priority === 'medium' && 'Mittel'}
                     {ticket.priority === 'low' && 'Niedrig'}
@@ -329,7 +329,7 @@ export default function TicketsPage() {
                     <option value="low">Niedrig</option>
                     <option value="medium">Mittel</option>
                     <option value="high">Hoch</option>
-                    <option value="urgent">Dringend</option>
+                    <option value="critical">Kritisch</option>
                   </select>
                 </div>
               </div>

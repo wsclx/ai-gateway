@@ -45,7 +45,7 @@ export function DocumentManager() {
       // Add assistant ID (for now, use a default one)
       formData.append('assistant_id', 'default-assistant-id');
 
-      const response = await fetch('/api/v1/training/documents', {
+      const response = await fetch('/api/proxy/training/documents', {
         method: 'POST',
         body: formData
       });

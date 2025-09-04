@@ -1,12 +1,49 @@
-from sqlalchemy import (
-    Column, String, DateTime, Text, Integer, Float, 
-    CheckConstraint, Boolean
-)
+from sqlalchemy import Column, String, DateTime, Text, Integer, Float, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
 from app.core.database import Base
+
+
+class TrainingDocument(Base):
+    __tablename__ = "training_documents"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    assistant_id = Column(UUID(as_uuid=True), ForeignKey("assistants.id"), nullable=False)
+    filename = Column(String(255), nullable=False)
+    content_type = Column(String(100))
+    size = Column(Integer)  # in bytes
+    chunk_count = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    processed = Column(Boolean, default=False)
+    
+    # Relationships
+    assistant = relationship("Assistant", back_populates="training_documents")
+    chunks = relationship("DocumentChunk", back_populates="document", cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<TrainingDocument(filename='{self.filename}', assistant_id='{self.assistant_id}')>"
+
+
+class DocumentChunk(Base):
+    __tablename__ = "document_chunks"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(UUID(as_uuid=True), ForeignKey("training_documents.id"), nullable=False)
+    content = Column(Text, nullable=False)
+    # embedding = Column(Vector(384))  # Temporarily disabled - needs pgvector
+    embedding_json = Column(JSONB)  # Store embedding as JSON temporarily
+    chunk_index = Column(Integer, nullable=False)
+    chunk_metadata = Column(JSONB, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    document = relationship("TrainingDocument", back_populates="chunks")
+    
+    def __repr__(self):
+        return f"<DocumentChunk(document_id='{self.document_id}', index={self.chunk_index})>"
 
 
 class TrainingJob(Base):
@@ -18,21 +55,13 @@ class TrainingJob(Base):
     
     # Training Configuration
     base_model = Column(String(50), nullable=False)  # gpt-4o-mini, gpt-4o
-    training_type = Column(
-        String(30), 
-        nullable=False,
-        default="finetuning"
-    )
+    training_type = Column(String(30), nullable=False, default="finetuning")
     learning_rate = Column(Float, default=0.0001)
     epochs = Column(Integer, default=3)
     batch_size = Column(Integer, default=16)
     
     # Status and Progress
-    status = Column(
-        String(20), 
-        nullable=False, 
-        default="pending"
-    )
+    status = Column(String(20), nullable=False, default="pending")
     progress = Column(Float, default=0.0)  # 0.0 to 1.0
     current_epoch = Column(Integer, default=0)
     
@@ -60,34 +89,14 @@ class TrainingJob(Base):
     logs = Column(JSONB, default=list)  # Training logs
     
     # Relationships
-    assistant_id = Column(UUID(as_uuid=True))  # Link to resulting assistant
+    assistant_id = Column(UUID(as_uuid=True), ForeignKey("assistants.id"))  # Link to assistant
+    assistant = relationship("Assistant", back_populates="training_jobs")
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True), 
-        server_default=func.now(), 
-        onupdate=func.now()
-    )
-    
-    __table_args__ = (
-        CheckConstraint(
-            "training_type in ('finetuning', 'rag', 'custom_instructions')"
-        ),
-        CheckConstraint(
-            "status in ('pending', 'queued', 'training', 'paused', "
-            "'completed', 'failed', 'cancelled')"
-        ),
-        CheckConstraint("progress >= 0.0 and progress <= 1.0"),
-        CheckConstraint("learning_rate > 0.0"),
-        CheckConstraint("epochs > 0"),
-        CheckConstraint("batch_size > 0"),
-    )
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     def __repr__(self):
-        return (
-            f"<TrainingJob(name='{self.name}', status='{self.status}', "
-            f"progress={self.progress:.1%})>"
-        )
+        return f"<TrainingJob(name='{self.name}', status='{self.status}', progress={self.progress:.1%})>"
 
 
 class TrainingDataset(Base):
@@ -98,15 +107,12 @@ class TrainingDataset(Base):
     description = Column(Text)
     
     # Dataset Type
-    dataset_type = Column(
-        String(30), 
-        nullable=False,
-        default="conversations"
-    )
+    dataset_type = Column(String(30), nullable=False, default="conversations")
     
     # Content
     data = Column(JSONB, nullable=False)  # The actual training data
     format = Column(String(20), default="jsonl")  # jsonl, csv
+    
     # Statistics
     total_examples = Column(Integer, default=0)
     total_tokens = Column(Integer, default=0)
@@ -124,25 +130,7 @@ class TrainingDataset(Base):
     metadata_json = Column(JSONB, default=dict)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True), 
-        server_default=func.now(), 
-        onupdate=func.now()
-    )
-    
-    __table_args__ = (
-        CheckConstraint(
-            "dataset_type in ('conversations', 'qa_pairs', 'instructions', "
-            "'code_examples')"
-        ),
-        CheckConstraint("validation_split >= 0.0 and validation_split <= 1.0"),
-        CheckConstraint("total_examples >= 0"),
-        CheckConstraint("total_tokens >= 0"),
-    )
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     def __repr__(self):
-        return (
-            f"<TrainingDataset(name='{self.name}', "
-            f"type='{self.dataset_type}', "
-            f"examples={self.total_examples})>"
-        )
+        return f"<TrainingDataset(name='{self.name}', type='{self.dataset_type}', examples={self.total_examples})>"

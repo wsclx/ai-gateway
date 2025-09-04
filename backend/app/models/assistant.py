@@ -39,7 +39,7 @@ class Assistant(Base):
     # Relationships
     threads = relationship("Thread", back_populates="assistant")
     training_documents = relationship("TrainingDocument", back_populates="assistant")
-    fine_tuning_jobs = relationship("FineTuningJob", back_populates="assistant")
+    training_jobs = relationship("TrainingJob", back_populates="assistant")
     
     def __repr__(self):
         return f"<Assistant(name='{self.name}', provider='{self.provider}')>"

@@ -41,7 +41,7 @@ export function FineTuningPanel() {
   const startFineTuning = async () => {
     setIsStarting(true);
     try {
-      const response = await fetch('/api/v1/training/fine-tune', {
+      const response = await fetch('/api/proxy/training/fine-tune', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
